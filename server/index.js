@@ -7,7 +7,6 @@ import userRoute from "./routes/userRoute.js";
 import expenseRoute from "./routes/expenseRoute.js";
 import budgetRoute from "./routes/budgetRoute.js";
 import categoryRoute from "./routes/categoryRoute.js";
-import invitationRoute from "./routes/invitationRoute.js";
 
 dotenv.config();
 
@@ -27,7 +26,6 @@ app.use("/api/users", userRoute);
 app.use("/api/expenses", expenseRoute);
 app.use("/api/budgets", budgetRoute);
 app.use("/api/categories", categoryRoute);
-app.use("/api/invitations", invitationRoute);
 
 app.listen(PORT, () => {
     console.log(`Server is running on port: ${PORT}`);
