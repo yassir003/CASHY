@@ -12,6 +12,7 @@ import {
 import LoginScreen from "./auth/login-screen"
 import RegisterScreen from "./auth/register-screen"
 
+
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState<"login" | "register">("login")
 
@@ -42,7 +43,9 @@ export default function App() {
           {currentScreen === "login" ? <LoginScreen /> : <RegisterScreen />}
         </ScrollView>
       </KeyboardAvoidingView>
+      
     </SafeAreaView>
+    
   )
 }
 
