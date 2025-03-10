@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
-import BottomNavbar from '@/components/BottomNavbar'; // Adjust the import path as needed
+import BottomNavbar from '@/components/BottomNavbar'; 
 
 const HomeScreen = () => {
   return (
@@ -8,7 +8,7 @@ const HomeScreen = () => {
       {/* Main Content */}
       <ScrollView
         style={styles.content}
-        contentContainerStyle={styles.scrollViewContent} // Add padding to the content
+        contentContainerStyle={styles.scrollViewContent} 
       >
         {/* Header */}
         <View style={styles.header}>
@@ -96,7 +96,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollViewContent: {
-    paddingBottom: 80, // Add padding equal to the height of the BottomNavbar
+    paddingBottom: 80, 
   },
   header: {
     marginBottom: 24,
@@ -166,7 +166,7 @@ const styles = StyleSheet.create({
   },
   metricSubtext: {
     fontSize: 14,
-    color: '#4caf50', // Green for positive change
+    color: '#4caf50', 
   },
   transactionHeader: {
     flexDirection: 'row',
@@ -204,12 +204,12 @@ const styles = StyleSheet.create({
   },
   transactionAmountPositive: {
     fontSize: 16,
-    color: '#4caf50', // Green for positive amounts
+    color: '#4caf50', 
     fontWeight: 'bold',
   },
   transactionAmountNegative: {
     fontSize: 16,
-    color: '#f44336', // Red for negative amounts
+    color: '#f44336',
     fontWeight: 'bold',
   },
   separator: {
