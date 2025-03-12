@@ -1,56 +1,86 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Image, ScrollView } from 'react-native';
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
+} from "react-native";
 import { Send, Plus, Wallet } from 'lucide-react-native'; // Assuming you have lucide-react-native for icons
-// import { Header } from '@/components/header'; // Ensure this is adapted for React Native
+import { Ionicons } from "@expo/vector-icons"; // For icons
+// import { Header } from "@/components/header"; // Adjust this for React Native
+import { TransactionModal, type Transaction } from "@/components/transaction-modal"
 
-const Home = () => {
-  const recentTransactions = [
+// Initial transactions data
+// const initialTransactions = [
+//   {
+//     id: "t1",
+//     name: "Salary Deposit",
+//     date: "Today, 12:30 PM",
+//     amount: "5000.00",
+//     type: "credit",
+//     category: "income",
+//   },
+//   {
+//     id: "t2",
+//     name: "Amazon Purchase",
+//     date: "Today, 10:15 AM",
+//     amount: "129.99",
+//     type: "debit",
+//     category: "shopping",
+//   },
+//   {
+//     id: "t3",
+//     name: "Netflix Subscription",
+//     date: "Yesterday, 3:20 PM",
+//     amount: "14.99",
+//     type: "debit",
+//     category: "entertainment",
+//   },
+// ];
+
+export default function Home() {
+  // Initial transactions data
+  const initialTransactions: Transaction[] = [
     {
-      name: "Salary Deposit",
-      date: "Today, 12:30 PM",
-      amount: "5,000.00",
-      type: "credit",
-    },
-    {
-      name: "Amazon Purchase",
-      date: "Today, 10:15 AM",
-      amount: "129.99",
-      type: "debit",
-    },
-    {
-      name: "Netflix Subscription",
-      date: "Yesterday, 3:20 PM",
-      amount: "14.99",
-      type: "debit",
-    },
-    {
-      name: "Netflix Subscription",
-      date: "Yesterday, 3:20 PM",
-      amount: "14.99",
-      type: "debit",
-    },
-    {
-      name: "Netflix Subscription",
-      date: "Yesterday, 3:20 PM",
-      amount: "14.99",
-      type: "debit",
-    },
-    {
-      name: "Netflix Subscription",
-      date: "Yesterday, 3:20 PM",
-      amount: "14.99",
-      type: "debit",
-    },
-    {
-      name: "Netflix Subscription",
-      date: "Yesterday, 3:20 PM",
-      amount: "14.99",
-      type: "debit",
-    },
-  ];
+    id: "t1",
+    name: "Salary Deposit",
+    date: "Today, 12:30 PM",
+    amount: "5000.00",
+    type: "credit",
+    category: "income",
+  },
+  {
+    id: "t2",
+    name: "Amazon Purchase",
+    date: "Today, 10:15 AM",
+    amount: "129.99",
+    type: "debit",
+    category: "shopping",
+  },
+  {
+    id: "t3",
+    name: "Netflix Subscription",
+    date: "Yesterday, 3:20 PM",
+    amount: "14.99",
+    type: "debit",
+    category: "entertainment",
+  },
+];
+  const [recentTransactions, setRecentTransactions] = useState<Transaction[]>(initialTransactions)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const handleAddTransaction = () => {
+    setIsModalOpen(true);
+  };
+
+  const handleSaveTransaction = (transaction: Transaction) => {
+    setRecentTransactions([transaction, ...recentTransactions.slice(0, 2)]);
+    setIsModalOpen(false);
+  };
 
   return (
-    <ScrollView style={styles.container}>
+    <View style={styles.container}>
       {/* <Header showProfile={true} /> */}
 
       {/* Balance Card */}
@@ -88,33 +118,60 @@ const Home = () => {
       {/* Recent Transactions Preview */}
       <View style={styles.recentTransactions}>
         <View style={styles.recentHeader}>
-          <Text style={styles.recentTitle}>Recent Transactions</Text>
+          <Text style={styles.recentHeaderText}>Recent Transactions</Text>
           <TouchableOpacity>
             <Text style={styles.seeAllText}>See All</Text>
           </TouchableOpacity>
         </View>
-        <View style={styles.transactionsList}>
-          {recentTransactions.map((transaction, index) => (
-            <View key={index} style={styles.transactionItem}>
-              <View style={styles.transactionIcon}>
-                <Text style={transaction.type === "credit" ? styles.creditIcon : styles.debitIcon}>
-                  {transaction.type === "credit" ? "+" : "-"}
-                </Text>
+        <View style={styles.transactionsCard}>
+          {recentTransactions.map((transaction) => (
+            <View key={transaction.id} style={styles.transactionItem}>
+              <View style={styles.transactionInfo}>
+                <View
+                  style={[
+                    styles.transactionIcon,
+                    transaction.type === "credit"
+                      ? styles.creditIcon
+                      : styles.debitIcon,
+                  ]}
+                >
+                  <Text style={styles.transactionIconText}>
+                    {transaction.type === "credit" ? "+" : "-"}
+                  </Text>
+                </View>
+                <View>
+                  <Text style={styles.transactionName}>{transaction.name}</Text>
+                  <Text style={styles.transactionDate}>{transaction.date}</Text>
+                </View>
               </View>
-              <View style={styles.transactionDetails}>
-                <Text style={styles.transactionName}>{transaction.name}</Text>
-                <Text style={styles.transactionDate}>{transaction.date}</Text>
-              </View>
-              <Text style={transaction.type === "credit" ? styles.creditAmount : styles.debitAmount}>
+              <Text
+                style={[
+                  styles.transactionAmount,
+                  transaction.type === "credit" ? styles.creditAmount : null,
+                ]}
+              >
                 {transaction.type === "credit" ? "+" : "-"}${transaction.amount}
               </Text>
             </View>
           ))}
         </View>
       </View>
-    </ScrollView>
+
+      {/* Floating Action Button */}
+      <TouchableOpacity style={styles.fab} onPress={handleAddTransaction}>
+        <Ionicons name="add" size={24} color="#fff" />
+      </TouchableOpacity>
+
+      {/* Transaction Modal */}
+      <TransactionModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSave={handleSaveTransaction}
+        isEditing={false}
+      />
+    </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -161,7 +218,6 @@ const styles = StyleSheet.create({
   balanceButtonText: {
     color: '#FFFFFF',
     marginLeft: 8,
-    fontSize: 14,
   },
   quickStats: {
     flexDirection: 'row',
@@ -173,6 +229,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: 16,
+    elevation: 2,
   },
   statLabel: {
     color: '#6B7280',
@@ -184,12 +241,12 @@ const styles = StyleSheet.create({
     marginVertical: 4,
   },
   statChangeRed: {
-    color: '#EF4444',
     fontSize: 12,
+    color: "#ef4444",
   },
   statChangeGreen: {
-    color: '#10B981',
     fontSize: 12,
+    color: "#22c55e",
   },
   recentTransactions: {
     marginBottom: 16,
@@ -200,7 +257,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
-  recentTitle: {
+  recentHeaderText: {
     fontSize: 18,
     fontWeight: 'bold',
   },
@@ -208,9 +265,10 @@ const styles = StyleSheet.create({
     color: '#2563EB',
     fontSize: 14,
   },
-  transactionsList: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
+  transactionsCard: {
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    elevation: 2,
   },
   transactionItem: {
     flexDirection: 'row',
@@ -218,7 +276,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    borderBottomColor: "#E5E7EB",
+  },
+  transactionInfo: {
+    flexDirection: "row",
+    alignItems: "center",
   },
   transactionIcon: {
     width: 40,
@@ -229,37 +291,40 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   creditIcon: {
-    color: '#2563EB',
-    fontSize: 16,
-    fontWeight: 'bold',
+    backgroundColor: "#dbeafe",
   },
   debitIcon: {
-    color: '#000000',
-    fontSize: 16,
-    fontWeight: 'bold',
+    backgroundColor: "#f3f4f6",
   },
-  transactionDetails: {
-    flex: 1,
-    marginLeft: 16,
+  transactionIconText: {
+    fontSize: 16,
+    fontWeight: "bold",
   },
   transactionName: {
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   transactionDate: {
-    color: '#6B7280',
     fontSize: 14,
+    color: "#666",
+  },
+  transactionAmount: {
+    fontSize: 16,
+    fontWeight: "bold",
   },
   creditAmount: {
-    color: '#2563EB',
-    fontSize: 16,
-    fontWeight: 'bold',
+    color: "#3b82f6",
   },
-  debitAmount: {
-    color: '#000000',
-    fontSize: 16,
-    fontWeight: 'bold',
+  fab: {
+    position: "absolute",
+    bottom: 24,
+    right: 24,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: "#3b82f6",
+    justifyContent: "center",
+    alignItems: "center",
+    elevation: 4,
   },
 });
-
-export default Home;

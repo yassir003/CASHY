@@ -9,7 +9,7 @@ import AuthScreen from "./screens/auth/AuthScreen"
 
 // Main app screens
 import HomeScreen from "./screens/main/HomeScreen"
-import ExploreScreen from "./screens/main/ExploreScreen"
+import TransactionScreen from "./screens/main/TransactionScreen"
 import ProfileScreen from "./screens/main/ProfileScreen";
 
 // Define types for navigation
@@ -19,7 +19,7 @@ type AuthStackParamList = {
 
 type MainTabParamList = {
   Home: undefined;
-  Explore: undefined;
+  Transaction: undefined;
   Profile: undefined;
 }
 
@@ -54,8 +54,8 @@ const MainTabNavigator = () => {
 
           if (route.name === "Home") {
             iconName = focused ? "home" : "home-outline"
-          } else if (route.name === "Explore") {
-            iconName = focused ? "compass" : "compass-outline"
+          } else if (route.name === "Transaction") {
+            iconName = focused ? "swap-horizontal" : "swap-horizontal-outline"
           } else if (route.name === "Profile") { 
             iconName = focused ? "person" : "person-outline";
           } else {
@@ -89,10 +89,10 @@ const MainTabNavigator = () => {
         }}
       />
       <MainTab.Screen 
-        name="Explore" 
-        component={ExploreScreen}
+        name="Transaction" 
+        component={TransactionScreen}
         options={{
-          tabBarLabel: "Explore"
+          tabBarLabel: "Transaction"
         }}
       />
       <MainTab.Screen
