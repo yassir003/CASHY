@@ -4,7 +4,11 @@ import { useState } from "react"
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from "react-native"
 import { Eye, EyeOff, Mail, Lock, User } from "lucide-react-native"
 
-export default function RegisterScreen() {
+type RegisterScreenProps = {
+  onRegistrationSuccess: () => void; // Callback for successful registration
+};
+
+const RegisterScreen: React.FC<RegisterScreenProps> = ({ onRegistrationSuccess }) => {
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -15,23 +19,24 @@ export default function RegisterScreen() {
 
   const handleRegister = () => {
     if (!name || !email || !password || !confirmPassword) {
-      Alert.alert("Error", "Please fill in all fields")
-      return
+      Alert.alert("Error", "Please fill in all fields");
+      return;
     }
 
     if (password !== confirmPassword) {
-      Alert.alert("Error", "Passwords do not match")
-      return
+      Alert.alert("Error", "Passwords do not match");
+      return;
     }
 
-    setIsLoading(true)
+    setIsLoading(true);
 
     // Simulate API call
     setTimeout(() => {
-      setIsLoading(false)
-      Alert.alert("Success", "Registration successful!")
-    }, 1500)
-  }
+      setIsLoading(false);
+      Alert.alert("Success", "Registration successful!");
+      onRegistrationSuccess(); // Trigger the callback after successful registration
+    }, 1500);
+  };
 
   return (
     <View style={styles.container}>
@@ -107,6 +112,9 @@ export default function RegisterScreen() {
     </View>
   )
 }
+
+export default RegisterScreen;
+
 
 const styles = StyleSheet.create({
   container: {

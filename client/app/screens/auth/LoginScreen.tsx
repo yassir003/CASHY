@@ -4,7 +4,11 @@ import { useState } from "react"
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from "react-native"
 import { Eye, EyeOff, Mail, Lock } from "lucide-react-native"
 
-export default function LoginScreen() {
+type LoginScreenProps = {
+  onLoginSuccess: () => void; // Callback for successful login
+};
+
+const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
@@ -12,18 +16,28 @@ export default function LoginScreen() {
 
   const handleLogin = () => {
     if (!email || !password) {
-      Alert.alert("Error", "Please fill in all fields")
-      return
+      Alert.alert("Error", "Please fill in all fields");
+      return;
     }
 
-    setIsLoading(true)
+    setIsLoading(true);
 
-    // Simulate API call
+    // Simulate a login process
     setTimeout(() => {
-      setIsLoading(false)
-      Alert.alert("Success", "Login successful!")
-    }, 1500)
-  }
+      setIsLoading(false);
+
+      // Static login credentials (for testing purposes)
+      const staticEmail = "user@example.com";
+      const staticPassword = "password123";
+
+      if (email === staticEmail && password === staticPassword) {
+        Alert.alert("Success", "Login successful!");
+        onLoginSuccess(); // Trigger navigation to Main screen
+      } else {
+        Alert.alert("Error", "Invalid email or password");
+      }
+    }, 1500);
+  };
 
   return (
     <View style={styles.container}>
@@ -85,6 +99,9 @@ export default function LoginScreen() {
     </View>
   )
 }
+
+export default LoginScreen;
+
 
 const styles = StyleSheet.create({
   container: {
