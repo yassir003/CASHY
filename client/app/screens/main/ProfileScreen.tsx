@@ -1,17 +1,16 @@
-import React, { useEffect, useState } from 'react';
-import { 
-  View, 
-  Text, 
-  Image, 
-  StyleSheet, 
-  TouchableOpacity, 
-  SafeAreaView, 
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  Image,
+  StyleSheet,
+  TouchableOpacity,
+  SafeAreaView,
   ScrollView,
-  Alert
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
-import { StackNavigationProp } from '@react-navigation/stack';
+import EditModal from '../../../components/EditModal'; // Import the EditModal component
 
 // Define the user profile data type
 interface UserProfileData {
@@ -25,21 +24,7 @@ interface UserProfileData {
   profileImage?: string;
 }
 
-// Define the navigation prop type
-type RootStackParamList = {
-  Profile: undefined;
-  EditProfile: {
-    section: 'profile' | 'household';
-    userData: UserProfileData;
-  };
-};
-
-type ProfileScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Profile'>;
-
 const ProfileScreen: React.FC = () => {
-  const navigation = useNavigation<ProfileScreenNavigationProp>();
-  
-  // Mock user data - in a real app, you would fetch this from an API or local storage
   const [userInfo, setUserInfo] = useState<UserProfileData>({
     fullName: 'Amin',
     birthday: 'February 18, 2003',
@@ -50,22 +35,35 @@ const ProfileScreen: React.FC = () => {
     zipCode: '40100',
   });
 
+  // State for modal visibility
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [editingSection, setEditingSection] = useState<'profile' | 'household'>('profile');
+  const [formData, setFormData] = useState<UserProfileData>(userInfo);
+
   // Handle back navigation
   const handleBack = () => {
-    navigation.goBack();
+    // Implement your back navigation logic here
   };
 
-  // Handle section editing - navigate to edit screens
+  // Handle edit button press
   const handleEdit = (section: 'profile' | 'household') => {
-    navigation.navigate('EditProfile', {
-      section: section,
-      userData: userInfo,
-    });
+    setEditingSection(section);
+    setIsModalVisible(true);
   };
 
-  // Handle save button press
+  // Handle save button press in the modal
   const handleSave = () => {
-    Alert.alert('Save', 'Profile information saved successfully');
+    setUserInfo(formData); // Update the user info
+    setIsModalVisible(false); // Close the modal
+    Alert.alert('Success', 'Profile information saved successfully');
+  };
+
+  // Handle input changes
+  const handleInputChange = (field: keyof UserProfileData, value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
   };
 
   return (
@@ -84,14 +82,14 @@ const ProfileScreen: React.FC = () => {
         <View style={styles.profileHeader}>
           <View style={styles.profileImageContainer}>
             {userInfo.profileImage ? (
-              <Image 
-                source={{ uri: userInfo.profileImage }} 
-                style={styles.profileImage} 
+              <Image
+                source={{ uri: userInfo.profileImage }}
+                style={styles.profileImage}
               />
             ) : (
               <View style={styles.profileImagePlaceholder}>
                 <Text style={styles.profileInitials}>
-                  {userInfo.fullName.split(' ').map(name => name[0]).join('')}
+                  {userInfo.fullName.split(' ').map((name) => name[0]).join('')}
                 </Text>
               </View>
             )}
@@ -110,21 +108,21 @@ const ProfileScreen: React.FC = () => {
               <Text style={styles.editButton}>Edit</Text>
             </TouchableOpacity>
           </View>
-          
+
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>Full Name</Text>
             <Text style={styles.infoValue}>{userInfo.fullName}</Text>
           </View>
-          
+
           <View style={styles.divider} />
-          
+
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>Birthday</Text>
             <Text style={styles.infoValue}>{userInfo.birthday}</Text>
           </View>
-          
+
           <View style={styles.divider} />
-          
+
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>Timezone</Text>
             <Text style={styles.infoValue}>{userInfo.timezone}</Text>
@@ -139,28 +137,28 @@ const ProfileScreen: React.FC = () => {
               <Text style={styles.editButton}>Edit</Text>
             </TouchableOpacity>
           </View>
-          
+
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>Address</Text>
             <Text style={styles.infoValue}>{userInfo.address}</Text>
           </View>
-          
+
           <View style={styles.divider} />
-          
+
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>City</Text>
             <Text style={styles.infoValue}>{userInfo.city}</Text>
           </View>
-          
+
           <View style={styles.divider} />
-          
+
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>State</Text>
             <Text style={styles.infoValue}>{userInfo.state}</Text>
           </View>
-          
+
           <View style={styles.divider} />
-          
+
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>Zip Code</Text>
             <Text style={styles.infoValue}>{userInfo.zipCode}</Text>
@@ -168,10 +166,20 @@ const ProfileScreen: React.FC = () => {
         </View>
 
         {/* Save Button */}
-        <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-          <Text style={styles.saveButtonText}>Save</Text>
+        <TouchableOpacity style={styles.S} onPress={handleSave}>
+          <Text style={styles.SText}>Save</Text>
         </TouchableOpacity>
       </ScrollView>
+
+      {/* Edit Modal */}
+      <EditModal
+        visible={isModalVisible}
+        onClose={() => setIsModalVisible(false)}
+        onSave={handleSave}
+        formData={formData}
+        handleInputChange={handleInputChange}
+        editingSection={editingSection}
+      />
     </SafeAreaView>
   );
 };
@@ -286,7 +294,7 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: '#e0e0e0',
   },
-  saveButton: {
+  S: {
     backgroundColor: '#2563EB',
     marginHorizontal: 16,
     marginVertical: 20,
@@ -294,7 +302,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
   },
-  saveButtonText: {
+  SText: {
     color: 'white',
     fontSize: 16,
     fontWeight: '600',
