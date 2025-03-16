@@ -10,7 +10,8 @@ import {
   Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import EditModal from '../../../components/EditModal'; // Import the EditModal component
+import EditModal from '../../../components/EditModal'; 
+import { useNavigation } from '@react-navigation/native';
 
 // Define the user profile data type
 interface UserProfileData {
@@ -25,6 +26,7 @@ interface UserProfileData {
 }
 
 const ProfileScreen: React.FC = () => {
+  const navigation = useNavigation();
   const [userInfo, setUserInfo] = useState<UserProfileData>({
     fullName: 'Amin',
     birthday: 'February 18, 2003',
@@ -42,7 +44,7 @@ const ProfileScreen: React.FC = () => {
 
   // Handle back navigation
   const handleBack = () => {
-    // Implement your back navigation logic here
+    navigation.goBack();
   };
 
   // Handle edit button press
@@ -53,8 +55,8 @@ const ProfileScreen: React.FC = () => {
 
   // Handle save button press in the modal
   const handleSave = () => {
-    setUserInfo(formData); // Update the user info
-    setIsModalVisible(false); // Close the modal
+    setUserInfo(formData); 
+    setIsModalVisible(false); 
     Alert.alert('Success', 'Profile information saved successfully');
   };
 

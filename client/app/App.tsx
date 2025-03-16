@@ -12,6 +12,7 @@ import HomeScreen from "./screens/main/HomeScreen"
 import TransactionScreen from "./screens/main/TransactionScreen"
 import ProfileScreen from "./screens/main/ProfileScreen";
 import BudgetScreen from "./screens/main/BudgetScreen"
+import AnalyticsDashboard from "./screens/main/Analytics"
 
 // Define types for navigation
 type AuthStackParamList = {
@@ -23,6 +24,7 @@ type MainTabParamList = {
   Transaction: undefined;
   Budget: undefined;
   Profile: undefined;
+  Analytics: undefined;
 }
 
 type RootStackParamList = {
@@ -60,6 +62,8 @@ const MainTabNavigator = () => {
             iconName = focused ? "swap-horizontal" : "swap-horizontal-outline"
           } else if (route.name === "Budget") { 
             iconName = focused ? "wallet" : "wallet-outline";
+          } else if (route.name === "Analytics") { 
+              iconName = focused ? "bar-chart" : "bar-chart-outline";
           } else if (route.name === "Profile") { 
             iconName = focused ? "person" : "person-outline";
           } else {
@@ -103,7 +107,14 @@ const MainTabNavigator = () => {
         name="Budget"
         component={BudgetScreen}
         options={{
-          tabBarLabel: "Bdget",
+          tabBarLabel: "Budget",
+        }}
+      />
+      <MainTab.Screen
+        name="Analytics"
+        component={AnalyticsDashboard}
+        options={{
+          tabBarLabel: "Analytics"
         }}
       />
       <MainTab.Screen
