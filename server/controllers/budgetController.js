@@ -2,10 +2,10 @@ import Budget from "../models/budgetModel.js";
 
 // Set a budget
 export const setBudget = async (req, res) => {
-    const { amount, category, limit } = req.body;
+    const { amount } = req.body;
 
     try {
-        const budget = new Budget({ amount, category, limit, userId: req.user.userId });
+        const budget = new Budget({ amount, userId: req.user.userId });
         await budget.save();
         res.status(201).json({ message: "Budget set successfully" });
     } catch (error) {
@@ -41,10 +41,10 @@ export const getOneBudget = async (req, res) => {
 
 // Edit a budget
 export const editBudget = async (req, res) => {
-    const { amount, category, limit } = req.body;
+    const { amount } = req.body;
 
     try {
-        const budget = await Budget.findByIdAndUpdate(req.params.id, { amount, category, limit }, { new: true });
+        const budget = await Budget.findByIdAndUpdate(req.params.id, { amount }, { new: true });
         if (!budget) {
             return res.status(404).json({ message: "Budget not found" });
         }

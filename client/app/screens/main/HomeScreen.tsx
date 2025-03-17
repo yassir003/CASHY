@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { Send, Plus, Wallet } from 'lucide-react-native'; // Assuming you have lucide-react-native for icons
 import { Ionicons } from "@expo/vector-icons"; // For icons
-// import { Header } from "@/components/header"; // Adjust this for React Native
+import { Header } from "@/components/Header"; // Adjust this for React Native
 import { TransactionModal, type Transaction } from "@/components/transaction-modal"
 
 // Initial transactions data
@@ -67,6 +67,22 @@ export default function Home() {
     type: "debit",
     category: "entertainment",
   },
+  {
+    id: "t2",
+    name: "Amazon Purchase",
+    date: "Today, 10:15 AM",
+    amount: "129.99",
+    type: "debit",
+    category: "shopping",
+  },
+  {
+    id: "t3",
+    name: "Netflix Subscription",
+    date: "Yesterday, 3:20 PM",
+    amount: "14.99",
+    type: "debit",
+    category: "entertainment",
+  },  
 ];
   const [recentTransactions, setRecentTransactions] = useState<Transaction[]>(initialTransactions)
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -81,7 +97,6 @@ export default function Home() {
 
   return (
     <View style={styles.container}>
-      {/* <Header showProfile={true} /> */}
 
       {/* Balance Card */}
       <View style={styles.balanceCard}>
@@ -179,7 +194,7 @@ const styles = StyleSheet.create({
     paddingTop: 24,
     paddingBottom: 20,
     paddingHorizontal: 16,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: '#f5f6fa',
   },
   balanceCard: {
     backgroundColor: '#2563EB',

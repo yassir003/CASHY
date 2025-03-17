@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Modal, StyleSheet } from 'react-native';
+import { AntDesign } from '@expo/vector-icons'; // For icons
 
 // Define the props for the EditTotalBudgetDialog component
 interface EditTotalBudgetDialogProps {
@@ -20,23 +21,29 @@ const EditTotalBudgetDialog: React.FC<EditTotalBudgetDialogProps> = ({ visible, 
     <Modal visible={visible} transparent={true} animationType="slide" onRequestClose={onDismiss}>
       <View style={styles.modalOverlay}>
         <View style={styles.modalContent}>
-          <Text style={styles.modalTitle}>Edit Total Budget</Text>
-          <TextInput
-            placeholder="Total Budget Amount ($)"
-            value={newBudget}
-            onChangeText={setNewBudget}
-            keyboardType="numeric"
-            style={styles.input}
-          />
-          <Text style={styles.note}>This will proportionally adjust all category budgets.</Text>
-          <View style={styles.modalActions}>
-            <TouchableOpacity onPress={onDismiss} style={styles.cancelButton}>
-              <Text style={styles.buttonText}>Cancel</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={handleSubmit} style={styles.submitButton}>
-              <Text style={styles.buttonText}>Update Budget</Text>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Edit Total Budget</Text>
+            <TouchableOpacity onPress={onDismiss} style={styles.closeButton}>
+              <AntDesign name="close" size={24} color="#000" />
             </TouchableOpacity>
           </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Total Budget Amount ($)</Text>
+            <TextInput
+              value={newBudget}
+              onChangeText={setNewBudget}
+              keyboardType="numeric"
+              style={styles.input}
+              placeholder="Enter total budget"
+            />
+          </View>
+
+          <Text style={styles.note}>This will proportionally adjust all category budgets.</Text>
+
+          <TouchableOpacity style={styles.saveButton} onPress={handleSubmit}>
+            <Text style={styles.saveButtonText}>Update Budget</Text>
+          </TouchableOpacity>
         </View>
       </View>
     </Modal>
@@ -53,41 +60,52 @@ const styles = StyleSheet.create({
   modalContent: {
     width: '90%',
     backgroundColor: '#fff',
-    borderRadius: 8,
-    padding: 16,
+    borderRadius: 10,
+    padding: 20,
+    maxHeight: '80%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
   },
   modalTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
-    marginBottom: 16,
+  },
+  closeButton: {
+    padding: 5,
+  },
+  inputGroup: {
+    marginBottom: 20,
+  },
+  label: {
+    fontSize: 16,
+    marginBottom: 8,
+    fontWeight: '500',
   },
   input: {
     borderWidth: 1,
     borderColor: '#ccc',
-    borderRadius: 4,
-    padding: 8,
-    marginBottom: 16,
+    borderRadius: 5,
+    padding: 10,
+    fontSize: 16,
   },
   note: {
-    fontSize: 12,
+    fontSize: 14,
     color: '#666',
-    marginBottom: 16,
+    marginBottom: 20,
   },
-  modalActions: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-  },
-  cancelButton: {
-    padding: 8,
-    marginRight: 8,
-  },
-  submitButton: {
-    padding: 8,
+  saveButton: {
     backgroundColor: '#3b82f6',
-    borderRadius: 4,
+    padding: 15,
+    borderRadius: 5,
+    alignItems: 'center',
   },
-  buttonText: {
+  saveButtonText: {
     color: '#fff',
+    fontSize: 16,
     fontWeight: 'bold',
   },
 });

@@ -5,10 +5,6 @@ const budgetSchema = new mongoose.Schema({
     type: Number,
     required: true
   },
-  limit: {
-    type: Number,
-    required: true
-  },
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
