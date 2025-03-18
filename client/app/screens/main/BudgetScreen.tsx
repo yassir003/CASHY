@@ -4,9 +4,8 @@ import { Home, Utensils, Car, Film, Music, ShoppingBag, Briefcase, Plane, Heart,
 import AddEditCategoryDialog from '@/components/AddEditCategoryDialog';
 import EditTotalBudgetDialog from '@/components/EditTotalBudgetDialog';
 
-// Define the Category type (ensure `id` is required)
 interface Category {
-  id: number; // `id` is required
+  id: number;
   name: string;
   budget: number;
   spent: number;
@@ -51,80 +50,91 @@ const BudgetScreen = () => {
   };
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.totalBudgetCard}>
-        <View style={styles.totalBudgetHeader}>
-          <Text style={styles.totalBudgetLabel}>Total Budget</Text>
-          <View style={styles.totalBudgetActions}>
-            <Pressable onPress={() => setIsBudgetDialogVisible(true)}>
-              <Pencil color="#000" />
-            </Pressable>
-            <Wallet color="#000" />
-          </View>
-        </View>
-        <Text style={styles.totalBudgetAmount}>${totalBudget.toLocaleString()}</Text>
-        <View style={styles.progressContainer}>
-          <Text style={styles.progressText}>Spent: ${totalSpent.toLocaleString()}</Text>
-          <Text style={styles.progressText}>Remaining: ${(totalBudget - totalSpent).toLocaleString()}</Text>
-        </View>
-        <View style={styles.progressBarBackground}>
-          <View style={[styles.progressBarFill, { width: `${(totalSpent / totalBudget) * 100}%` }]} />
-        </View>
-      </View>
-
-      <View style={styles.categoriesHeader}>
-        <Text style={styles.categoriesTitle}>Budget Categories</Text>
-        <TouchableOpacity style={styles.addButton} onPress={() => handleOpenDialog()}>
-          <Plus color="#fff" />
-          <Text style={styles.addButtonText}>Add Category</Text>
-        </TouchableOpacity>
-      </View>
-
-      {categories.map((category) => (
-        <View key={category.id} style={styles.categoryCard}>
-          <View style={styles.categoryHeader}>
-            <View style={styles.categoryIcon}>
-              {category.icon === "Home" && <Home color={category.color} />}
-              {category.icon === "Utensils" && <Utensils color={category.color} />}
-              {category.icon === "Car" && <Car color={category.color} />}
-              {category.icon === "Film" && <Film color={category.color} />}
-              {category.icon === "Music" && <Music color={category.color} />}
-              {category.icon === "ShoppingBag" && <ShoppingBag color={category.color} />}
-              {category.icon === "Briefcase" && <Briefcase color={category.color} />}
-              {category.icon === "Plane" && <Plane color={category.color} />}
-              {category.icon === "Heart" && <Heart color={category.color} />}
-              {category.icon === "Smartphone" && <Smartphone color={category.color} />}
-            </View>
-            <Text style={styles.categoryName}>{category.name}</Text>
-            <View style={styles.categoryActions}>
-              <Pressable onPress={() => handleOpenDialog(category)}>
-                <Pencil color="#000" />
-              </Pressable>
-              <Pressable onPress={() => handleDelete(category.id)}>
-                <Trash2 color="#000" />
+    <View style={styles.container}>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        {/* Total Budget Card */}
+        <View style={styles.totalBudgetCard}>
+          <View style={styles.totalBudgetHeader}>
+            <Text style={styles.totalBudgetLabel}>Total Budget</Text>
+            <View style={styles.totalBudgetActions}>
+              <Pressable onPress={() => setIsBudgetDialogVisible(true)}>
+                <Pencil color="#e0f2fe" size={18} />
               </Pressable>
             </View>
           </View>
+          <Text style={styles.totalBudgetAmount}>${totalBudget.toLocaleString()}</Text>
           <View style={styles.progressContainer}>
-            <Text style={styles.progressText}>${category.spent.toLocaleString()} spent</Text>
-            <Text style={styles.progressText}>${category.budget.toLocaleString()} budget</Text>
+            <Text style={styles.cardText}>Spent: ${totalSpent.toLocaleString()}</Text>
+            <Text style={styles.cardText}>Remaining: ${(totalBudget - totalSpent).toLocaleString()}</Text>
           </View>
           <View style={styles.progressBarBackground}>
-            <View style={[styles.progressBarFill, { width: `${(category.spent / category.budget) * 100}%`, backgroundColor: category.color }]} />
+            <View style={[styles.progressBarFill, { width: `${(totalSpent / totalBudget) * 100}%` }]} />
           </View>
         </View>
-      ))}
 
+        {/* Categories Section */}
+        <View style={styles.categoriesHeader}>
+          <Text style={styles.categoriesTitle}>Budget Categories</Text>
+          <TouchableOpacity 
+            style={styles.addButton} 
+            onPress={() => handleOpenDialog()}
+          >
+            <Plus color="#fff" size={18} />
+            <Text style={styles.addButtonText}>Add Category</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Categories List */}
+        {categories.map((category) => (
+          <View key={category.id} style={styles.categoryCard}>
+            <View style={styles.categoryHeader}>
+              <View style={[styles.categoryIcon, { backgroundColor: `${category.color}20` }]}>
+                {category.icon === "Home" && <Home color={category.color} size={20} />}
+                {category.icon === "Utensils" && <Utensils color={category.color} size={20} />}
+                {category.icon === "Car" && <Car color={category.color} size={20} />}
+                {category.icon === "Film" && <Film color={category.color} size={20} />}
+                {category.icon === "Music" && <Music color={category.color} size={20} />}
+                {category.icon === "ShoppingBag" && <ShoppingBag color={category.color} size={20} />}
+                {category.icon === "Briefcase" && <Briefcase color={category.color} size={20} />}
+                {category.icon === "Plane" && <Plane color={category.color} size={20} />}
+                {category.icon === "Heart" && <Heart color={category.color} size={20} />}
+                {category.icon === "Smartphone" && <Smartphone color={category.color} size={20} />}
+              </View>
+              <Text style={styles.categoryName}>{category.name}</Text>
+              <View style={styles.categoryActions}>
+                <Pressable onPress={() => handleOpenDialog(category)}>
+                  <Pencil color="#64748b" size={18} />
+                </Pressable>
+                <Pressable onPress={() => handleDelete(category.id)}>
+                  <Trash2 color="#ef4444" size={18} />
+                </Pressable>
+              </View>
+            </View>
+            <View style={styles.progressContainer}>
+              <Text style={styles.progressText}>${category.spent.toLocaleString()} spent</Text>
+              <Text style={styles.progressText}>${category.budget.toLocaleString()} budget</Text>
+            </View>
+            <View style={styles.progressBarBackground}>
+              <View style={[styles.progressBarFill, { 
+                width: `${(category.spent / category.budget) * 100}%`, 
+                backgroundColor: category.color 
+              }]} />
+            </View>
+          </View>
+        ))}
+      </ScrollView>
+
+      {/* Dialogs */}
       <AddEditCategoryDialog
         visible={isDialogVisible}
         onDismiss={() => setIsDialogVisible(false)}
-        category={editingCategory || undefined} // Pass `undefined` if `editingCategory` is `null`
+        category={editingCategory || undefined}
         onSubmit={(category) => {
           if (editingCategory) {
-            // Update existing category
-            setCategories(categories.map((cat) => (cat.id === editingCategory.id ? { ...category, id: editingCategory.id } : cat)));
+            setCategories(categories.map((cat) => 
+              cat.id === editingCategory.id ? { ...category, id: editingCategory.id } : cat
+            ));
           } else {
-            // Add new category
             setCategories([...categories, { ...category, id: Date.now() }]);
           }
           setIsDialogVisible(false);
@@ -137,95 +147,105 @@ const BudgetScreen = () => {
         totalBudget={totalBudgetValue}
         onSubmit={handleUpdateTotalBudget}
       />
-    </ScrollView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#f8fafc',
+  },
+  scrollContent: {
     padding: 16,
-    backgroundColor:'#f5f6fa'
   },
   totalBudgetCard: {
     marginBottom: 16,
     padding: 16,
-    backgroundColor: '#fff',
-    borderRadius: 8,
+    backgroundColor: '#3b82f6',
+    borderRadius: 12,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 1,
   },
   totalBudgetHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: 8,
   },
   totalBudgetLabel: {
     fontSize: 14,
-    color: '#666',
+    color: '#e0f2fe',
   },
   totalBudgetAmount: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: '600',
     marginVertical: 8,
+    color: '#fff',
   },
   totalBudgetActions: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 12,
   },
   progressContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginVertical: 8,
   },
-  progressText: {
+  cardText: {
     fontSize: 12,
-    color: '#666',
+    color: '#e0f2fe',
   },
   progressBarBackground: {
     height: 8,
-    backgroundColor: '#e0e0e0',
+    backgroundColor: '#e2e8f0',
     borderRadius: 4,
     overflow: 'hidden',
   },
   progressBarFill: {
     height: '100%',
-    backgroundColor: '#3b82f6',
+    backgroundColor: '#bfdbfe',
   },
   categoriesHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 16,
+    paddingHorizontal: 8,
   },
   categoriesTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1e293b',
   },
   addButton: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#3b82f6',
-    padding: 8,
-    borderRadius: 4,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    gap: 8,
   },
   addButtonText: {
     color: '#fff',
-    marginLeft: 8,
+    fontSize: 14,
+    fontWeight: '500',
   },
   categoryCard: {
-    marginBottom: 16,
+    marginBottom: 4,
     padding: 16,
     backgroundColor: '#fff',
-    borderRadius: 8,
+    borderRadius: 12,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 1,
   },
   categoryHeader: {
     flexDirection: 'row',
@@ -233,15 +253,26 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   categoryIcon: {
-    marginRight: 8,
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
   },
   categoryName: {
     flex: 1,
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '500',
+    color: '#1e293b',
   },
   categoryActions: {
     flexDirection: 'row',
+    gap: 12,
+  },
+  progressText: {
+    fontSize: 12,
+    color: '#64748b',
   },
 });
 

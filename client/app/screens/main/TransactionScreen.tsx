@@ -5,18 +5,17 @@ import {
   ScrollView,
   TouchableOpacity,
   StyleSheet,
-  Alert,
+  SectionList,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons"; // For icons
-// import { Header } from "@/components/header"; // Adjust this for React Native
-import { TransactionModal, type Transaction } from "@/components/transaction-modal"
-// Mock data
-// Initial transactions data
+import { Ionicons } from "@expo/vector-icons";
+import { TransactionModal, type Transaction } from "@/components/transaction-modal";
+
+// Updated mock data with proper dates
 const initialTransactions: Transaction[] = [
   {
     id: "t1",
     name: "Salary Deposit",
-    date: "Today, 12:30 PM",
+    date: "2024-03-15",
     amount: "5000.00",
     type: "credit",
     category: "income",
@@ -24,7 +23,7 @@ const initialTransactions: Transaction[] = [
   {
     id: "t2",
     name: "Amazon Purchase",
-    date: "Today, 10:15 AM",
+    date: "2024-03-15",
     amount: "129.99",
     type: "debit",
     category: "shopping",
@@ -32,7 +31,7 @@ const initialTransactions: Transaction[] = [
   {
     id: "t3",
     name: "Netflix Subscription",
-    date: "Yesterday, 3:20 PM",
+    date: "2024-03-14",
     amount: "14.99",
     type: "debit",
     category: "entertainment",
@@ -40,122 +39,133 @@ const initialTransactions: Transaction[] = [
   {
     id: "t4",
     name: "Freelance Payment",
-    date: "Yesterday, 1:45 PM",
+    date: "2024-03-14",
     amount: "750.00",
     type: "credit",
     category: "income",
   },
-  {
-    id: "t5",
-    name: "Grocery Shopping",
-    date: "Feb 28, 5:30 PM",
-    amount: "85.75",
-    type: "debit",
-    category: "food",
-  },
-  {
-    id: "t6",
-    name: "Client Payment",
-    date: "Feb 28, 2:15 PM",
-    amount: "1200.00",
-    type: "credit",
-    category: "income",
-  },
-]
+];
+
+const getCategoryIcon = (category: string) => {
+  switch (category) {
+    case "shopping":
+      return { name: "cart", color: "#f59e0b" };
+    case "food":
+      return { name: "restaurant", color: "#10b981" };
+    case "income":
+      return { name: "wallet", color: "#3b82f6" };
+    case "entertainment":
+      return { name: "film", color: "#8b5cf6" };
+    default:
+      return { name: "md-card", color: "#6b7280" };
+  }
+};
+
+const groupTransactionsByDate = (transactions: Transaction[]) => {
+  const grouped: { [key: string]: Transaction[] } = {};
+  
+  transactions.forEach((transaction) => {
+    // Add null check and fallback
+    const transactionDate = transaction.date ? new Date(transaction.date) : new Date();
+    const date = transactionDate.toLocaleDateString("en-US", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+    
+    if (!grouped[date]) {
+      grouped[date] = [];
+    }
+    grouped[date].push(transaction);
+  });
+
+  return Object.entries(grouped).map(([title, data]) => ({ title, data }));
+};
 
 export default function TransactionsPage() {
-  const [transactions, setTransactions] = useState<Transaction[]>(initialTransactions)
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
-  const [currentTransaction, setCurrentTransaction] = useState<Transaction | undefined>()
-  const [isEditing, setIsEditing] = useState(false)
-
-  const handleAddTransaction = () => {
-    setCurrentTransaction(undefined);
-    setIsEditing(false);
-    setIsModalOpen(true);
-  };
-
-  const handleEditTransaction = (transaction: Transaction) => {
-    setCurrentTransaction(transaction)
-    setIsEditing(true)
-    setIsModalOpen(true)
-  }
-
-  const handleDeleteTransaction = (transaction: Transaction) => {
-    setCurrentTransaction(transaction)
-    setIsDeleteDialogOpen(true)
-  }
-
-  const confirmDelete = () => {
-    if (currentTransaction) {
-      setTransactions(transactions.filter((t) => t.id !== currentTransaction.id))
-    }
-    setIsDeleteDialogOpen(false)
-  }
+  const [transactions, setTransactions] = useState<Transaction[]>(initialTransactions);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [currentTransaction, setCurrentTransaction] = useState<Transaction | undefined>();
+  const [isEditing, setIsEditing] = useState(false);
 
   const handleSaveTransaction = (transaction: Transaction) => {
     if (isEditing) {
-      setTransactions(transactions.map((t) => (t.id === transaction.id ? transaction : t)))
+      setTransactions(transactions.map((t) => (t.id === transaction.id ? transaction : t)));
     } else {
-      setTransactions([transaction, ...transactions])
+      setTransactions([{ ...transaction, id: `t${Date.now()}` }, ...transactions]);
     }
-    setIsModalOpen(false)
-  }
+    setIsModalOpen(false);
+  };
+
+  const handleDelete = (id: string) => {
+    setTransactions(transactions.filter((t) => t.id !== id));
+  };
+
+  const renderTransactionItem = ({ item }: { item: Transaction }) => (
+    <View style={styles.transactionItem}>
+      <View style={styles.transactionLeft}>
+        <View style={[styles.categoryIcon, { backgroundColor: getCategoryIcon(item.category).color + "20" }]}>
+          <Ionicons
+            name={getCategoryIcon(item.category).name}
+            size={20}
+            color={getCategoryIcon(item.category).color}
+          />
+        </View>
+        <View style={styles.transactionInfo}>
+          <Text style={styles.transactionName}>{item.name}</Text>
+          <Text style={styles.transactionCategory}>{item.category}</Text>
+        </View>
+      </View>
+      <View style={styles.transactionRight}>
+        <Text style={[styles.amount, item.type === "credit" ? styles.credit : styles.debit]}>
+          {item.type === "credit" ? "+" : "-"}${item.amount}
+        </Text>
+        <View style={styles.actions}>
+          <TouchableOpacity onPress={() => { setCurrentTransaction(item); setIsEditing(true); setIsModalOpen(true); }}>
+            <Ionicons name="pencil" size={18} color="#6b7280" style={styles.actionIcon} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => handleDelete(item.id)}>
+            <Ionicons name="trash" size={18} color="#ef4444" style={styles.actionIcon} />
+          </TouchableOpacity>
+        </View>
+      </View>
+    </View>
+  );
 
   return (
     <View style={styles.container}>
-      {/* <Header title="Transactions" showProfile={false} /> */}
-
-      <ScrollView style={styles.scrollArea}>
-        <View style={styles.card}>
-          {transactions.map((transaction) => (
-            <View key={transaction.id} style={styles.transactionItem}>
-              <View style={styles.transactionInfo}>
-                <View
-                  style={[
-                    styles.iconContainer,
-                    transaction.type === "credit"
-                      ? styles.creditIcon
-                      : styles.debitIcon,
-                  ]}
-                >
-                  <Text style={styles.iconText}>
-                    {transaction.type === "credit" ? "+" : "-"}
-                  </Text>
-                </View>
-                <View>
-                  <Text style={styles.transactionName}>{transaction.name}</Text>
-                  <Text style={styles.transactionDate}>{transaction.date}</Text>
-                </View>
-              </View>
-              <View style={styles.transactionActions}>
-                <Text
-                  style={[
-                    styles.transactionAmount,
-                    transaction.type === "credit" ? styles.creditAmount : null,
-                  ]}
-                >
-                  {transaction.type === "credit" ? "+" : "-"}${transaction.amount}
-                </Text>
-                <TouchableOpacity
-                  onPress={() => handleEditTransaction(transaction)}
-                >
-                  <Ionicons name="pencil" size={20} color="#000" />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={() => handleDeleteTransaction(transaction)}
-                >
-                  <Ionicons name="trash" size={20} color="red" />
-                </TouchableOpacity>
-              </View>
-            </View>
-          ))}
+      <View style={styles.header}>
+        {/* <Text style={styles.headerTitle}>Transactions</Text> */}
+        <View style={styles.balanceContainer}>
+          <View style={styles.balanceItem}>
+            <Text style={styles.balanceLabel}>Income</Text>
+            <Text style={[styles.balanceValue, styles.credit]}>
+              ${transactions.filter(t => t.type === "credit").reduce((sum, t) => sum + parseFloat(t.amount), 0).toFixed(2)}
+            </Text>
+          </View>
+          <View style={styles.balanceItem}>
+            <Text style={styles.balanceLabel}>Expenses</Text>
+            <Text style={[styles.balanceValue, styles.debit]}>
+              ${transactions.filter(t => t.type === "debit").reduce((sum, t) => sum + parseFloat(t.amount), 0).toFixed(2)}
+            </Text>
+          </View>
         </View>
-      </ScrollView>
+      </View>
 
-      <TouchableOpacity style={styles.fab} onPress={handleAddTransaction}>
-        <Ionicons name="add" size={24} color="#fff" />
+      <SectionList
+        sections={groupTransactionsByDate(transactions)}
+        keyExtractor={(item) => item.id}
+        renderItem={renderTransactionItem}
+        renderSectionHeader={({ section: { title } }) => (
+          <Text style={styles.sectionHeader}>{title}</Text>
+        )}
+        contentContainerStyle={styles.listContent}
+        stickySectionHeadersEnabled={false}
+      />
+
+      <TouchableOpacity style={styles.fab} onPress={() => { setIsModalOpen(true); setIsEditing(false); }}>
+        <Ionicons name="add" size={28} color="white" />
       </TouchableOpacity>
 
       <TransactionModal
@@ -172,80 +182,124 @@ export default function TransactionsPage() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 24,
-    paddingBottom: 20,
-    backgroundColor: "#fff",
+    backgroundColor: "#f8fafc",
   },
-  scrollArea: {
+  header: {
+    padding: 20,
+    backgroundColor: "#ffffff",
+    borderBottomWidth: 1,
+    borderBottomColor: "#e2e8f0",
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: "700",
+    color: "#1e293b",
+    marginBottom: 16,
+  },
+  balanceContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  balanceItem: {
     flex: 1,
+    marginRight: 16,
   },
-  card: {
-    backgroundColor: "#fff",
-    borderRadius: 8,
-    marginHorizontal: 16,
-    marginVertical: 8,
-    elevation: 2,
+  balanceLabel: {
+    fontSize: 14,
+    color: "#64748b",
+    marginBottom: 4,
+  },
+  balanceValue: {
+    fontSize: 20,
+    fontWeight: "600",
+  },
+  credit: {
+    color: "#16a34a",
+  },
+  debit: {
+    color: "#dc2626",
+  },
+  listContent: {
+    paddingHorizontal: 16,
+    paddingBottom: 32,
+  },
+  sectionHeader: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#475569",
+    marginTop: 24,
+    marginBottom: 8,
+    backgroundColor: "#f8fafc",
+    paddingHorizontal: 8,
   },
   transactionItem: {
+    backgroundColor: "white",
+    borderRadius: 12,
+    padding: 16,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "#eee",
+    marginVertical: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 1,
   },
-  transactionInfo: {
+  transactionLeft: {
     flexDirection: "row",
     alignItems: "center",
   },
-  iconContainer: {
+  categoryIcon: {
     width: 40,
     height: 40,
-    borderRadius: 20,
+    borderRadius: 12,
     justifyContent: "center",
     alignItems: "center",
     marginRight: 16,
   },
-  creditIcon: {
-    backgroundColor: "#dbeafe",
-  },
-  debitIcon: {
-    backgroundColor: "#f3f4f6",
-  },
-  iconText: {
-    fontSize: 16,
-    fontWeight: "bold",
+  transactionInfo: {
+    justifyContent: "center",
   },
   transactionName: {
     fontSize: 16,
     fontWeight: "500",
+    color: "#1e293b",
+    marginBottom: 4,
   },
-  transactionDate: {
+  transactionCategory: {
     fontSize: 14,
-    color: "#666",
+    color: "#64748b",
   },
-  transactionActions: {
-    flexDirection: "row",
-    alignItems: "center",
+  transactionRight: {
+    alignItems: "flex-end",
   },
-  transactionAmount: {
+  amount: {
     fontSize: 16,
-    fontWeight: "bold",
-    marginRight: 16,
+    fontWeight: "600",
+    marginBottom: 8,
   },
-  creditAmount: {
-    color: "#3b82f6",
+  actions: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  actionIcon: {
+    padding: 4,
   },
   fab: {
     position: "absolute",
-    bottom: 24,
+    bottom: 32,
     right: 24,
+    backgroundColor: "#3b82f6",
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: "#3b82f6",
     justifyContent: "center",
     alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
     elevation: 4,
   },
 });
