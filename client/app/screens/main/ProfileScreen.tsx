@@ -12,6 +12,8 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import EditModal from '../../../components/EditModal'; 
 import { useNavigation } from '@react-navigation/native';
+import { useAuth } from '@/contexts/AuthContext';
+
 
 // Define the user profile data type
 interface UserProfileData {
@@ -27,6 +29,7 @@ interface UserProfileData {
 
 const ProfileScreen: React.FC = () => {
   const navigation = useNavigation();
+  const { logout } = useAuth(); // Get logout from context
   const [userInfo, setUserInfo] = useState<UserProfileData>({
     fullName: 'Amin',
     birthday: 'February 18, 2003',
@@ -42,6 +45,17 @@ const ProfileScreen: React.FC = () => {
   const [editingSection, setEditingSection] = useState<'profile' | 'household'>('profile');
   const [formData, setFormData] = useState<UserProfileData>(userInfo);
 
+
+
+  // Add a logout handler function
+const handleLogout = async () => {
+  try {
+    await logout();
+    // Navigate to login screen after logout
+  } catch (error) {
+    Alert.alert('Logout Error', 'Failed to logout. Please try again.');
+  }
+};
   // Handle back navigation
   const handleBack = () => {
     navigation.goBack();
@@ -167,11 +181,18 @@ const ProfileScreen: React.FC = () => {
           </View>
         </View>
 
-        {/* Save Button */}
-        <TouchableOpacity style={styles.S} onPress={handleSave}>
-          <Text style={styles.SText}>Save</Text>
-        </TouchableOpacity>
+        {/* // Add this logout section to your JSX before the closing  */}
+        <View style={styles.section}>
+          <TouchableOpacity 
+            style={styles.logoutButton}
+            onPress={handleLogout}
+          >
+            <Text style={styles.logoutButtonText}>Log Out</Text>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
+
+      
 
       {/* Edit Modal */}
       <EditModal
@@ -296,15 +317,13 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: '#e0e0e0',
   },
-  S: {
-    backgroundColor: '#2563EB',
-    marginHorizontal: 16,
-    marginVertical: 20,
-    paddingVertical: 14,
+  logoutButton: {
+    backgroundColor: '#ff4444',
     borderRadius: 8,
+    padding: 16,
     alignItems: 'center',
   },
-  SText: {
+  logoutButtonText: {
     color: 'white',
     fontSize: 16,
     fontWeight: '600',

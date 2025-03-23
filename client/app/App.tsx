@@ -1,9 +1,10 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { NavigationContainer } from "@react-navigation/native"
 import { createStackNavigator } from "@react-navigation/stack"
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs"
 import { Ionicons } from "@expo/vector-icons"
 import { Header } from "@/components/Header"
+import { AuthProvider, useAuth } from "@/contexts/AuthContext"
 
 // Auth screens 
 import AuthScreen from "./screens/auth/AuthScreen"
@@ -11,7 +12,7 @@ import AuthScreen from "./screens/auth/AuthScreen"
 // Main app screens
 import HomeScreen from "./screens/main/HomeScreen"
 import TransactionScreen from "./screens/main/TransactionScreen"
-import ProfileScreen from "./screens/main/ProfileScreen";
+import ProfileScreen from "./screens/main/ProfileScreen"
 import BudgetScreen from "./screens/main/BudgetScreen"
 import AnalyticsDashboard from "./screens/main/Analytics"
 
@@ -39,18 +40,27 @@ const MainTab = createBottomTabNavigator<MainTabParamList>()
 const RootStack = createStackNavigator<RootStackParamList>()
 
 // Auth navigator setup
-const AuthNavigator = ({ onAuthSuccess }: { onAuthSuccess: () => void }) => {
+const AuthNavigator = () => {
+  const { login } = useAuth();
+  
+  const handleAuthSuccess = () => {
+    // Auth success is now handled by the AuthContext
+  };
+
   return (
     <AuthStack.Navigator screenOptions={{ headerShown: false }}>
       <AuthStack.Screen name="Auth">
-        {props => <AuthScreen {...props} onAuthSuccess={onAuthSuccess} />}
+        {props => <AuthScreen {...props} onAuthSuccess={handleAuthSuccess} />}
       </AuthStack.Screen>
     </AuthStack.Navigator>
   )
 }
 
 // Main tab navigator setup - This is where the bottom tabs are defined
-const MainTabNavigator = ({ username }: { username: string }) => {
+const MainTabNavigator = () => {
+  const { user } = useAuth();
+  const username = user?.username || "User";
+
   return (
     <MainTab.Navigator
       screenOptions={({ route, navigation }) => ({
@@ -138,31 +148,31 @@ const MainTabNavigator = ({ username }: { username: string }) => {
   );
 };
 
-// Main app component
-export default function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [username, setUsername] = useState("John Doe");// Add username state
-
-  // Function to handle successful login/registration
-  const handleAuthSuccess = () => {
-    setIsAuthenticated(true);
-  };
+// AppNavigator component to handle the navigation state
+const AppNavigator = () => {
+  const { user, token } = useAuth();
+  const isAuthenticated = !!user && !!token;
 
   return (
     <NavigationContainer>
       <RootStack.Navigator screenOptions={{ headerShown: false }}>
         {isAuthenticated ? (
           // Show main tabs with bottom tab navigation when authenticated
-          <RootStack.Screen name="MainTabs">
-            {props => <MainTabNavigator {...props} username={username} />}
-          </RootStack.Screen>
+          <RootStack.Screen name="MainTabs" component={MainTabNavigator} />
         ) : (
           // Show auth stack without bottom tabs when not authenticated
-          <RootStack.Screen name="AuthStack">
-            {props => <AuthNavigator {...props} onAuthSuccess={handleAuthSuccess} />}
-          </RootStack.Screen>
+          <RootStack.Screen name="AuthStack" component={AuthNavigator} />
         )}
       </RootStack.Navigator>
     </NavigationContainer>
+  );
+};
+
+// Main app component
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppNavigator />
+    </AuthProvider>
   );
 }

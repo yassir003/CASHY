@@ -1,8 +1,9 @@
 "use client"
 
-import { useState } from "react"
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from "react-native"
+import { useState, useEffect } from "react"
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from "react-native"
 import { Eye, EyeOff, Mail, Lock } from "lucide-react-native"
+import { useAuth } from "@/contexts/AuthContext"
 
 type LoginScreenProps = {
   onLoginSuccess: () => void; // Callback for successful login
@@ -12,31 +13,37 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
+  
+  // Use the auth context
+  const { login, isLoading, error, clearError, user } = useAuth();
+  
+  // Monitor auth state changes
+  useEffect(() => {
+    if (user) {
+      onLoginSuccess();
+    }
+  }, [user, onLoginSuccess]);
+  
+  // Display error messages
+  useEffect(() => {
+    if (error) {
+      Alert.alert("Error", error);
+      clearError();
+    }
+  }, [error, clearError]);
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (!email || !password) {
       Alert.alert("Error", "Please fill in all fields");
       return;
     }
 
-    setIsLoading(true);
-
-    // Simulate a login process
-    setTimeout(() => {
-      setIsLoading(false);
-
-      // Static login credentials (for testing purposes)
-      const staticEmail = "user@example.com";
-      const staticPassword = "password123";
-
-      if (email === staticEmail && password === staticPassword) {
-        Alert.alert("Success", "Login successful!");
-        onLoginSuccess(); // Trigger navigation to Main screen
-      } else {
-        Alert.alert("Error", "Invalid email or password");
-      }
-    }, 1500);
+    try {
+      await login(email, password);
+      // The useEffect above will handle successful login
+    } catch (e) {
+      // Error is handled by the auth context
+    }
   };
 
   return (
@@ -52,6 +59,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
             onChangeText={setEmail}
             keyboardType="email-address"
             autoCapitalize="none"
+            editable={!isLoading}
           />
         </View>
       </View>
@@ -67,6 +75,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
             onChangeText={setPassword}
             secureTextEntry={!showPassword}
             autoCapitalize="none"
+            editable={!isLoading}
           />
           <TouchableOpacity style={styles.eyeIcon} onPress={() => setShowPassword(!showPassword)}>
             {showPassword ? <EyeOff size={20} color="#64748b" /> : <Eye size={20} color="#64748b" />}
@@ -78,30 +87,22 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
         <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.loginButton} onPress={handleLogin} disabled={isLoading}>
-        <Text style={styles.loginButtonText}>{isLoading ? "Logging in..." : "Login"}</Text>
+      <TouchableOpacity 
+        style={[styles.loginButton, isLoading && styles.loginButtonDisabled]} 
+        onPress={handleLogin} 
+        disabled={isLoading}
+      >
+        {isLoading ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <Text style={styles.loginButtonText}>Login</Text>
+        )}
       </TouchableOpacity>
-
-      {/* <View style={styles.divider}>
-        <View style={styles.dividerLine} />
-        <Text style={styles.dividerText}>or continue with</Text>
-        <View style={styles.dividerLine} />
-      </View> */}
-
-      {/* <View style={styles.socialButtons}>
-        <TouchableOpacity style={styles.socialButton}>
-          <Text style={styles.socialButtonText}>Google</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.socialButton}>
-          <Text style={styles.socialButtonText}>Apple</Text>
-        </TouchableOpacity>
-      </View> */}
     </View>
   )
 }
 
 export default LoginScreen;
-
 
 const styles = StyleSheet.create({
   container: {
@@ -152,41 +153,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 24,
   },
+  loginButtonDisabled: {
+    backgroundColor: "#93c5fd", // Lighter blue
+  },
   loginButtonText: {
     color: "#fff",
     fontSize: 16,
     fontWeight: "600",
   },
-  divider: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 24,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: "#cbd5e1", // Slate 300
-  },
-  dividerText: {
-    paddingHorizontal: 16,
-    color: "#64748b", // Slate 500
-  },
-  socialButtons: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  socialButton: {
-    flex: 0.48,
-    borderWidth: 1,
-    borderColor: "#cbd5e1", // Slate 300
-    borderRadius: 8,
-    paddingVertical: 12,
-    alignItems: "center",
-    backgroundColor: "#fff",
-  },
-  socialButtonText: {
-    color: "#334155", // Slate 700
-    fontWeight: "500",
-  },
 })
-

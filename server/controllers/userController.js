@@ -10,8 +10,23 @@ export const register = async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, 10);
         const user = new User({ username, email, password: hashedPassword });
         await user.save();
-        res.status(201).json({ message: "User registered successfully" });
+
+        const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: "1h" });
+        
+        // Custom user data with only username
+        const userData = { username: user.username };
+
+        res.status(201).json({
+            token,
+            user: userData
+        });
     } catch (error) {
+        if (error.code === 11000) {
+            const field = Object.keys(error.keyPattern)[0];
+            return res.status(400).json({ 
+                error: `${field === 'email' ? 'Email' : 'Username'} already exists`
+            });
+        }
         res.status(400).json({ error: error.message });
     }
 };
@@ -32,7 +47,14 @@ export const login = async (req, res) => {
         }
 
         const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: "1h" });
-        res.json({ token });
+        
+        // Custom user data with only username
+        const userData = { username: user.username };
+
+        res.json({ 
+            token,
+            user: userData
+        });
     } catch (error) {
         res.status(400).json({ error: error.message });
     }
