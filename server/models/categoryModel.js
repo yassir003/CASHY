@@ -9,6 +9,19 @@ const categorySchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
     required: true
+  },budget:{
+    type: Number,
+    required: true
+  },spent:{
+    type: mongoose.Schema.Types.ObjectId,
+    ref:"Expense",
+    required: true
+  },color:{
+    type: String,
+    required: true
+  },icon:{
+    type: String,
+    required:true
   }
 });
 
