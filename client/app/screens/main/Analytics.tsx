@@ -41,16 +41,16 @@ const AnalyticsDashboard: React.FC = () => {
 
   return (
     <ScrollView style={styles.container}>
-      {/* Header */}
+      {/* Header
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color="white" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Analytics</Text>
-      </View>
+      </View> */}
       
       {/* Month selector */}
-      <View style={styles.monthSelector}>
+      {/* <View style={styles.monthSelector}>
         <TouchableOpacity 
           style={styles.monthButton}
           onPress={() => setShowMonthPicker(!showMonthPicker)}
@@ -62,7 +62,7 @@ const AnalyticsDashboard: React.FC = () => {
         <TouchableOpacity style={styles.compareButton}>
           <Text style={styles.compareText}>Compare</Text>
         </TouchableOpacity>
-      </View>
+      </View> */}
       
       {/* Tabs */}
       <View style={styles.tabContainer}>
@@ -173,7 +173,7 @@ const AnalyticsDashboard: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#f5f6fa',
   },
   header: {
     flexDirection: 'row',

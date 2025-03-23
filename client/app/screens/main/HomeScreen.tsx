@@ -5,45 +5,13 @@ import {
   ScrollView,
   TouchableOpacity,
   StyleSheet,
-  Alert,
 } from "react-native";
-import { Send, Plus, Wallet } from 'lucide-react-native'; // Assuming you have lucide-react-native for icons
-import { Ionicons } from "@expo/vector-icons"; // For icons
-// import { Header } from "@/components/header"; // Adjust this for React Native
-import { TransactionModal, type Transaction } from "@/components/transaction-modal"
+import { Ionicons } from "@expo/vector-icons";
+import { Send, Plus, Wallet } from 'lucide-react-native';
+import { TransactionModal, type Transaction } from "@/components/transaction-modal";
 
-// Initial transactions data
-// const initialTransactions = [
-//   {
-//     id: "t1",
-//     name: "Salary Deposit",
-//     date: "Today, 12:30 PM",
-//     amount: "5000.00",
-//     type: "credit",
-//     category: "income",
-//   },
-//   {
-//     id: "t2",
-//     name: "Amazon Purchase",
-//     date: "Today, 10:15 AM",
-//     amount: "129.99",
-//     type: "debit",
-//     category: "shopping",
-//   },
-//   {
-//     id: "t3",
-//     name: "Netflix Subscription",
-//     date: "Yesterday, 3:20 PM",
-//     amount: "14.99",
-//     type: "debit",
-//     category: "entertainment",
-//   },
-// ];
-
-export default function Home() {
-  // Initial transactions data
-  const initialTransactions: Transaction[] = [
-    {
+const initialTransactions: Transaction[] = [
+  {
     id: "t1",
     name: "Salary Deposit",
     date: "Today, 12:30 PM",
@@ -68,11 +36,27 @@ export default function Home() {
     category: "entertainment",
   },
 ];
-  const [recentTransactions, setRecentTransactions] = useState<Transaction[]>(initialTransactions)
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const handleAddTransaction = () => {
-    setIsModalOpen(true);
-  };
+
+const getCategoryIcon = (category: string) => {
+  switch (category) {
+    case "shopping":
+      return { name: "cart", color: "#f59e0b" };
+    case "food":
+      return { name: "restaurant", color: "#10b981" };
+    case "income":
+      return { name: "wallet", color: "#3b82f6" };
+    case "entertainment":
+      return { name: "film", color: "#8b5cf6" };
+    default:
+      return { name: "md-card", color: "#6b7280" };
+  }
+};
+
+export default function Home() {
+  const [recentTransactions, setRecentTransactions] = useState<Transaction[]>(initialTransactions);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleAddTransaction = () => setIsModalOpen(true);
 
   const handleSaveTransaction = (transaction: Transaction) => {
     setRecentTransactions([transaction, ...recentTransactions.slice(0, 2)]);
@@ -81,8 +65,6 @@ export default function Home() {
 
   return (
     <View style={styles.container}>
-      {/* <Header showProfile={true} /> */}
-
       {/* Balance Card */}
       <View style={styles.balanceCard}>
         <View style={styles.balanceHeader}>
@@ -90,16 +72,6 @@ export default function Home() {
           <Wallet size={20} color="#BFDBFE" />
         </View>
         <Text style={styles.balanceAmount}>$1,258.90</Text>
-        <View style={styles.balanceActions}>
-            {/* <TouchableOpacity style={styles.balanceButton}>
-              <Send size={16} color="#FFFFFF" />
-              <Text style={styles.balanceButtonText}>Send</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.balanceButton}>
-              <Plus size={16} color="#FFFFFF" />
-              <Text style={styles.balanceButtonText}>Add Money</Text>
-            </TouchableOpacity> */}
-        </View>
       </View>
 
       {/* Quick Stats */}
@@ -107,7 +79,6 @@ export default function Home() {
         <View style={styles.statCard}>
           <Text style={styles.statLabel}>Month Spending</Text>
           <Text style={styles.statValue}>$3,482.55</Text>
-          <Text style={styles.statChangeGreen}>+50.3% of the Budget</Text>
         </View>
         <View style={styles.statCard}>
           <Text style={styles.statLabel}>Total Budget</Text>
@@ -123,37 +94,27 @@ export default function Home() {
             <Text style={styles.seeAllText}>See All</Text>
           </TouchableOpacity>
         </View>
+        
         <View style={styles.transactionsCard}>
-          {recentTransactions.map((transaction) => (
-            <View key={transaction.id} style={styles.transactionItem}>
-              <View style={styles.transactionInfo}>
-                <View
-                  style={[
-                    styles.transactionIcon,
-                    transaction.type === "credit"
-                      ? styles.creditIcon
-                      : styles.debitIcon,
-                  ]}
-                >
-                  <Text style={styles.transactionIconText}>
-                    {transaction.type === "credit" ? "+" : "-"}
-                  </Text>
+          {recentTransactions.map((transaction) => {
+            const icon = getCategoryIcon(transaction.category);
+            return (
+              <View key={transaction.id} style={styles.transactionItem}>
+                <View style={styles.transactionLeft}>
+                  <View style={[styles.categoryIcon, { backgroundColor: `${icon.color}20` }]}>
+                    <Ionicons name={icon.name} size={20} color={icon.color} />
+                  </View>
+                  <View style={styles.transactionInfo}>
+                    <Text style={styles.transactionName}>{transaction.name}</Text>
+                    <Text style={styles.transactionCategory}>{transaction.category}</Text>
+                  </View>
                 </View>
-                <View>
-                  <Text style={styles.transactionName}>{transaction.name}</Text>
-                  <Text style={styles.transactionDate}>{transaction.date}</Text>
-                </View>
+                <Text style={[styles.amount, transaction.type === "credit" ? styles.credit : styles.debit]}>
+                  {transaction.type === "credit" ? "+" : "-"}${transaction.amount}
+                </Text>
               </View>
-              <Text
-                style={[
-                  styles.transactionAmount,
-                  transaction.type === "credit" ? styles.creditAmount : null,
-                ]}
-              >
-                {transaction.type === "credit" ? "+" : "-"}${transaction.amount}
-              </Text>
-            </View>
-          ))}
+            );
+          })}
         </View>
       </View>
 
@@ -162,7 +123,6 @@ export default function Home() {
         <Ionicons name="add" size={24} color="#fff" />
       </TouchableOpacity>
 
-      {/* Transaction Modal */}
       <TransactionModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
@@ -176,155 +136,147 @@ export default function Home() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 24,
-    paddingBottom: 20,
-    paddingHorizontal: 16,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: "#f8fafc",
+    padding: 16,
   },
   balanceCard: {
-    backgroundColor: '#2563EB',
+    backgroundColor: "#3b82f6",
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 1,
   },
   balanceHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 8,
   },
   balanceHeaderText: {
-    color: '#BFDBFE',
+    color: "#BFDBFE",
     fontSize: 14,
   },
   balanceAmount: {
-    color: '#FFFFFF',
+    color: "#fff",
     fontSize: 32,
-    fontWeight: 'bold',
-    marginBottom: 16,
-  },
-  balanceActions: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  balanceButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-  },
-  balanceButtonText: {
-    color: '#FFFFFF',
-    marginLeft: 8,
+    fontWeight: "600",
   },
   quickStats: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 16,
     marginBottom: 16,
   },
   statCard: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#fff",
     borderRadius: 12,
     padding: 16,
-    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 1,
   },
   statLabel: {
-    color: '#6B7280',
+    color: "#64748b",
     fontSize: 14,
   },
   statValue: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: "600",
     marginVertical: 4,
-  },
-  statChangeRed: {
-    fontSize: 12,
-    color: "#ef4444",
-  },
-  statChangeGreen: {
-    fontSize: 12,
-    color: "#22c55e",
+    color: "#1e293b",
   },
   recentTransactions: {
-    marginBottom: 16,
+    flex: 1,
   },
   recentHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 16,
   },
   recentHeaderText: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "600",
+    color: "#1e293b",
   },
   seeAllText: {
-    color: '#2563EB',
+    color: "#3b82f6",
     fontSize: 14,
+    fontWeight: "500",
   },
   transactionsCard: {
     backgroundColor: "#fff",
-    borderRadius: 8,
-    elevation: 2,
+    borderRadius: 12,
   },
   transactionItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "#E5E7EB",
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    marginVertical: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 1,
   },
-  transactionInfo: {
+  transactionLeft: {
     flexDirection: "row",
     alignItems: "center",
   },
-  transactionIcon: {
+  categoryIcon: {
     width: 40,
     height: 40,
-    borderRadius: 20,
-    backgroundColor: '#DBEAFE',
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderRadius: 12,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 16,
   },
-  creditIcon: {
-    backgroundColor: "#dbeafe",
-  },
-  debitIcon: {
-    backgroundColor: "#f3f4f6",
-  },
-  transactionIconText: {
-    fontSize: 16,
-    fontWeight: "bold",
+  transactionInfo: {
+    justifyContent: "center",
   },
   transactionName: {
     fontSize: 16,
     fontWeight: "500",
+    color: "#1e293b",
+    marginBottom: 4,
   },
-  transactionDate: {
+  transactionCategory: {
     fontSize: 14,
-    color: "#666",
+    color: "#64748b",
   },
-  transactionAmount: {
+  amount: {
     fontSize: 16,
-    fontWeight: "bold",
+    fontWeight: "600",
   },
-  creditAmount: {
-    color: "#3b82f6",
+  credit: {
+    color: "#16a34a",
+  },
+  debit: {
+    color: "#dc2626",
   },
   fab: {
     position: "absolute",
-    bottom: 24,
+    bottom: 32,
     right: 24,
+    backgroundColor: "#3b82f6",
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: "#3b82f6",
     justifyContent: "center",
     alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
     elevation: 4,
   },
 });

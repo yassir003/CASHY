@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Modal, StyleSheet } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Modal, StyleSheet, ScrollView } from 'react-native';
+import { AntDesign } from '@expo/vector-icons'; // For icons
 import { Home, Utensils, Car, Film, Music, ShoppingBag, Briefcase, Plane, Heart, Smartphone } from 'lucide-react-native';
 
 // Define the type for the category object
@@ -43,70 +44,91 @@ const AddEditCategoryDialog: React.FC<AddEditCategoryDialogProps> = ({ visible, 
     <Modal visible={visible} transparent={true} animationType="slide" onRequestClose={onDismiss}>
       <View style={styles.modalOverlay}>
         <View style={styles.modalContent}>
-          <Text style={styles.modalTitle}>{category ? 'Edit Category' : 'Add Category'}</Text>
-          <TextInput
-            placeholder="Category Name"
-            value={name}
-            onChangeText={setName}
-            style={styles.input}
-          />
-          <TextInput
-            placeholder="Budget Amount ($)"
-            value={budget}
-            onChangeText={setBudget}
-            keyboardType="numeric"
-            style={styles.input}
-          />
-          <TextInput
-            placeholder="Spent Amount ($)"
-            value={spent}
-            onChangeText={setSpent}
-            keyboardType="numeric"
-            style={styles.input}
-          />
-          <Text style={styles.label}>Color</Text>
-          <View style={styles.colorOptions}>
-            {colorOptions.map((colorOption) => (
-              <TouchableOpacity
-                key={colorOption}
-                onPress={() => setColor(colorOption)}
-                style={[styles.colorButton, { backgroundColor: colorOption }]}
-              >
-                {color === colorOption && <Text style={styles.checkIcon}>✓</Text>}
-              </TouchableOpacity>
-            ))}
-          </View>
-          <Text style={styles.label}>Icon</Text>
-          <View style={styles.iconOptions}>
-            {[
-              { name: 'Home', icon: <Home color={icon === 'Home' ? color : '#666'} /> },
-              { name: 'Utensils', icon: <Utensils color={icon === 'Utensils' ? color : '#666'} /> },
-              { name: 'Car', icon: <Car color={icon === 'Car' ? color : '#666'} /> },
-              { name: 'Film', icon: <Film color={icon === 'Film' ? color : '#666'} /> },
-              { name: 'Music', icon: <Music color={icon === 'Music' ? color : '#666'} /> },
-              { name: 'ShoppingBag', icon: <ShoppingBag color={icon === 'ShoppingBag' ? color : '#666'} /> },
-              { name: 'Briefcase', icon: <Briefcase color={icon === 'Briefcase' ? color : '#666'} /> },
-              { name: 'Plane', icon: <Plane color={icon === 'Plane' ? color : '#666'} /> },
-              { name: 'Heart', icon: <Heart color={icon === 'Heart' ? color : '#666'} /> },
-              { name: 'Smartphone', icon: <Smartphone color={icon === 'Smartphone' ? color : '#666'} /> },
-            ].map((iconOption) => (
-              <TouchableOpacity
-                key={iconOption.name}
-                onPress={() => setIcon(iconOption.name)}
-                style={styles.iconButton}
-              >
-                {iconOption.icon}
-              </TouchableOpacity>
-            ))}
-          </View>
-          <View style={styles.modalActions}>
-            <TouchableOpacity onPress={onDismiss} style={styles.cancelButton}>
-              <Text style={styles.buttonText}>Cancel</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={handleSubmit} style={styles.submitButton}>
-              <Text style={styles.buttonText}>{category ? 'Update' : 'Add'}</Text>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>{category ? 'Edit Category' : 'Add Category'}</Text>
+            <TouchableOpacity onPress={onDismiss} style={styles.closeButton}>
+              <AntDesign name="close" size={24} color="#000" />
             </TouchableOpacity>
           </View>
+
+          <ScrollView style={styles.formContainer}>
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Category Name</Text>
+              <TextInput
+                placeholder="e.g. Groceries"
+                value={name}
+                onChangeText={setName}
+                style={styles.input}
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Budget Amount ($)</Text>
+              <TextInput
+                placeholder="0.00"
+                value={budget}
+                onChangeText={setBudget}
+                keyboardType="numeric"
+                style={styles.input}
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Spent Amount ($)</Text>
+              <TextInput
+                placeholder="0.00"
+                value={spent}
+                onChangeText={setSpent}
+                keyboardType="numeric"
+                style={styles.input}
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Color</Text>
+              <View style={styles.colorOptions}>
+                {colorOptions.map((colorOption) => (
+                  <TouchableOpacity
+                    key={colorOption}
+                    onPress={() => setColor(colorOption)}
+                    style={[styles.colorButton, { backgroundColor: colorOption }]}
+                  >
+                    {color === colorOption && <Text style={styles.checkIcon}>✓</Text>}
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Icon</Text>
+              <View style={styles.iconOptions}>
+                {[
+                  { name: 'Home', icon: <Home color={icon === 'Home' ? color : '#666'} size={24} /> },
+                  { name: 'Utensils', icon: <Utensils color={icon === 'Utensils' ? color : '#666'} size={24} /> },
+                  { name: 'Car', icon: <Car color={icon === 'Car' ? color : '#666'} size={24} /> },
+                  { name: 'Film', icon: <Film color={icon === 'Film' ? color : '#666'} size={24} /> },
+                  { name: 'Music', icon: <Music color={icon === 'Music' ? color : '#666'} size={24} /> },
+                  { name: 'ShoppingBag', icon: <ShoppingBag color={icon === 'ShoppingBag' ? color : '#666'} size={24} /> },
+                  { name: 'Briefcase', icon: <Briefcase color={icon === 'Briefcase' ? color : '#666'} size={24} /> },
+                  { name: 'Plane', icon: <Plane color={icon === 'Plane' ? color : '#666'} size={24} /> },
+                  { name: 'Heart', icon: <Heart color={icon === 'Heart' ? color : '#666'} size={24} /> },
+                  { name: 'Smartphone', icon: <Smartphone color={icon === 'Smartphone' ? color : '#666'} size={24} /> },
+                ].map((iconOption) => (
+                  <TouchableOpacity
+                    key={iconOption.name}
+                    onPress={() => setIcon(iconOption.name)}
+                    style={styles.iconButton}
+                  >
+                    {iconOption.icon}
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          </ScrollView>
+
+          <TouchableOpacity style={styles.saveButton} onPress={handleSubmit}>
+            <Text style={styles.saveButtonText}>{category ? 'Save Changes' : 'Add Category'}</Text>
+          </TouchableOpacity>
         </View>
       </View>
     </Modal>
@@ -117,73 +139,98 @@ const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
   },
   modalContent: {
-    width: '90%',
-    backgroundColor: '#fff',
-    borderRadius: 8,
+    backgroundColor: '#ffffff',
+    marginHorizontal: 20,
+    borderRadius: 12,
     padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 24,
   },
   modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 16,
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#1e293b',
   },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 4,
-    padding: 8,
+  closeButton: {
+    padding: 4,
+  },
+  formContainer: {
+    maxHeight: '80%',
+  },
+  inputGroup: {
     marginBottom: 16,
   },
   label: {
     fontSize: 14,
-    fontWeight: 'bold',
+    color: '#64748b',
     marginBottom: 8,
+    fontWeight: '500',
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+    color: '#1e293b',
   },
   colorOptions: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginBottom: 16,
+    gap: 8,
   },
   colorButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
-    margin: 4,
+    borderWidth: 2,
+    borderColor: 'transparent',
   },
   checkIcon: {
-    color: '#fff',
+    color: '#ffffff',
     fontSize: 16,
+    fontWeight: 'bold',
   },
   iconOptions: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginBottom: 16,
+    gap: 12,
   },
   iconButton: {
-    margin: 4,
-  },
-  modalActions: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-  },
-  cancelButton: {
     padding: 8,
-    marginRight: 8,
+    borderRadius: 8,
+    backgroundColor: '#f8fafc',
   },
-  submitButton: {
-    padding: 8,
+  saveButton: {
     backgroundColor: '#3b82f6',
-    borderRadius: 4,
+    borderRadius: 8,
+    padding: 16,
+    marginTop: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  buttonText: {
-    color: '#fff',
-    fontWeight: 'bold',
+  saveButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
   },
 });
 

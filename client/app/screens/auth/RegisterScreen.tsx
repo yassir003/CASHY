@@ -1,8 +1,9 @@
 "use client"
 
-import { useState } from "react"
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from "react-native"
+import { useState, useEffect } from "react"
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from "react-native"
 import { Eye, EyeOff, Mail, Lock, User } from "lucide-react-native"
+import { useAuth } from "@/contexts/AuthContext"
 
 type RegisterScreenProps = {
   onRegistrationSuccess: () => void; // Callback for successful registration
@@ -15,9 +16,26 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ onRegistrationSuccess }
   const [confirmPassword, setConfirmPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
+  
+  // Use the auth context
+  const { register, isLoading, error, clearError, user } = useAuth();
+  
+  // Monitor auth state changes
+  useEffect(() => {
+    if (user) {
+      onRegistrationSuccess();
+    }
+  }, [user, onRegistrationSuccess]);
+  
+  // Display error messages
+  useEffect(() => {
+    if (error) {
+      Alert.alert("Error", error);
+      clearError();
+    }
+  }, [error, clearError]);
 
-  const handleRegister = () => {
+  const handleRegister = async () => {
     if (!name || !email || !password || !confirmPassword) {
       Alert.alert("Error", "Please fill in all fields");
       return;
@@ -28,14 +46,12 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ onRegistrationSuccess }
       return;
     }
 
-    setIsLoading(true);
-
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false);
-      Alert.alert("Success", "Registration successful!");
-      onRegistrationSuccess(); // Trigger the callback after successful registration
-    }, 1500);
+    try {
+      await register(name, email, password);
+      // The useEffect above will handle successful registration
+    } catch (e) {
+      // Error is handled by the auth context
+    }
   };
 
   return (
@@ -44,7 +60,13 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ onRegistrationSuccess }
         <Text style={styles.label}>Full Name</Text>
         <View style={styles.inputContainer}>
           <User size={20} color="#64748b" style={styles.inputIcon} />
-          <TextInput style={styles.input} placeholder="Enter your full name" value={name} onChangeText={setName} />
+          <TextInput 
+            style={styles.input} 
+            placeholder="Enter your full name" 
+            value={name} 
+            onChangeText={setName}
+            editable={!isLoading}
+          />
         </View>
       </View>
 
@@ -59,6 +81,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ onRegistrationSuccess }
             onChangeText={setEmail}
             keyboardType="email-address"
             autoCapitalize="none"
+            editable={!isLoading}
           />
         </View>
       </View>
@@ -74,6 +97,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ onRegistrationSuccess }
             onChangeText={setPassword}
             secureTextEntry={!showPassword}
             autoCapitalize="none"
+            editable={!isLoading}
           />
           <TouchableOpacity style={styles.eyeIcon} onPress={() => setShowPassword(!showPassword)}>
             {showPassword ? <EyeOff size={20} color="#64748b" /> : <Eye size={20} color="#64748b" />}
@@ -92,6 +116,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ onRegistrationSuccess }
             onChangeText={setConfirmPassword}
             secureTextEntry={!showConfirmPassword}
             autoCapitalize="none"
+            editable={!isLoading}
           />
           <TouchableOpacity style={styles.eyeIcon} onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
             {showConfirmPassword ? <EyeOff size={20} color="#64748b" /> : <Eye size={20} color="#64748b" />}
@@ -106,15 +131,22 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ onRegistrationSuccess }
         </Text>
       </View>
 
-      <TouchableOpacity style={styles.registerButton} onPress={handleRegister} disabled={isLoading}>
-        <Text style={styles.registerButtonText}>{isLoading ? "Creating Account..." : "Create Account"}</Text>
+      <TouchableOpacity 
+        style={[styles.registerButton, isLoading && styles.registerButtonDisabled]} 
+        onPress={handleRegister} 
+        disabled={isLoading}
+      >
+        {isLoading ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <Text style={styles.registerButtonText}>Create Account</Text>
+        )}
       </TouchableOpacity>
     </View>
   )
 }
 
 export default RegisterScreen;
-
 
 const styles = StyleSheet.create({
   container: {
@@ -169,10 +201,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 24,
   },
+  registerButtonDisabled: {
+    backgroundColor: "#93c5fd", // Lighter blue
+  },
   registerButtonText: {
     color: "#fff",
     fontSize: 16,
     fontWeight: "600",
   },
 })
-

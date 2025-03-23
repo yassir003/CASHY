@@ -66,3 +66,50 @@ export const deleteExpense = async (req, res) => {
         res.status(400).json({ error: error.message });
     }
 };
+
+
+// Get the last 5 expenses for the current month
+export const getLastFiveThisMonthExpenses = async (req, res) => {
+    try {
+        const today = new Date(); // Get the current date
+        const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1); // First day of the month
+        const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0); // Last day of the month
+
+        const expenses = await Expense.find({
+            userId: req.user.userId, // Filter by user
+            date: { $gte: startOfMonth, $lte: endOfMonth }, // Filter by date range (this month)
+        })
+            .sort({ date: -1 }) // Sort by date in descending order (most recent first)
+            .limit(5); // Limit the results to 5
+
+        if (!expenses.length) {
+            return res.status(404).json({ message: "No expenses found for this month" });
+        }
+
+        res.json(expenses);
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+};
+
+// Get expenses for the current month
+export const getThisMonthExpenses = async (req, res) => {
+    try {
+        const today = new Date(); // Get the current date
+        const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1); // First day of the month
+        const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0); // Last day of the month
+
+        const expenses = await Expense.find({
+            userId: req.user.userId, // Filter by user
+            date: { $gte: startOfMonth, $lte: endOfMonth }, // Filter by date range (this month)
+        });
+
+        if (!expenses.length) {
+            return res.status(404).json({ message: "No expenses found for this month" });
+        }
+
+        res.json(expenses);
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+};
