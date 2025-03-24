@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect} from "react";
 import {
   View,
   Text,
@@ -9,6 +9,8 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { Send, Plus, Wallet } from 'lucide-react-native';
 import { TransactionModal, type Transaction } from "@/components/transaction-modal";
+import { BudgetModal } from '@/components/BudgetModal';
+import { useBudget } from '@/contexts/BudgetContext';
 
 const initialTransactions: Transaction[] = [
   {
@@ -55,6 +57,14 @@ const getCategoryIcon = (category: string) => {
 export default function Home() {
   const [recentTransactions, setRecentTransactions] = useState<Transaction[]>(initialTransactions);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const { budget, setBudget } = useBudget();
+  const [showBudgetModal, setShowBudgetModal] = useState(false);
+
+  useEffect(() => {
+    if (budget === null) {
+      setShowBudgetModal(true);
+    }
+  }, [budget]);
 
   const handleAddTransaction = () => setIsModalOpen(true);
 
@@ -82,8 +92,19 @@ export default function Home() {
         </View>
         <View style={styles.statCard}>
           <Text style={styles.statLabel}>Total Budget</Text>
-          <Text style={styles.statValue}>$24,562.80</Text>
+          <Text style={styles.statValue}>
+            {budget !== null 
+              ? `$${budget.toLocaleString('en-US', { minimumFractionDigits: 2 })}`
+              : '$0.00'}
+          </Text>
         </View>
+
+        {/* Add BudgetModal component */}
+        <BudgetModal
+          visible={showBudgetModal}
+          onClose={() => setShowBudgetModal(false)}
+          onSubmit={setBudget}
+        />
       </View>
 
       {/* Recent Transactions Preview */}

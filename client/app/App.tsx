@@ -5,6 +5,7 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs"
 import { Ionicons } from "@expo/vector-icons"
 import { Header } from "@/components/Header"
 import { AuthProvider, useAuth } from "@/contexts/AuthContext"
+import { BudgetProvider } from '@/contexts/BudgetContext';
 
 // Auth screens 
 import AuthScreen from "./screens/auth/AuthScreen"
@@ -172,7 +173,9 @@ const AppNavigator = () => {
 export default function App() {
   return (
     <AuthProvider>
-      <AppNavigator />
+      <BudgetProvider>
+        <AppNavigator />
+      </BudgetProvider>
     </AuthProvider>
   );
 }

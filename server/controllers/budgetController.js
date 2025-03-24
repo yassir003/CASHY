@@ -13,18 +13,6 @@ export const setBudget = async (req, res) => {
     }
 };
 
-// Get all budgets for a user
-export const getBudgets = async (req, res) => {
-    try {
-        const budgets = await Budget.find({ userId: req.user.userId });
-        if (!budgets.length) {
-            return res.status(404).json({ message: "No budgets found" });
-        }
-        res.json(budgets);
-    } catch (error) {
-        res.status(400).json({ error: error.message });
-    }
-};
 
 // Get one budget by ID
 export const getOneBudget = async (req, res) => {
