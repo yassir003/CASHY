@@ -14,13 +14,15 @@ export const setBudget = async (req, res) => {
 };
 
 
-// Get one budget by ID
-export const getOneBudget = async (req, res) => {
+// Get budget by user ID
+export const getBudgetByUserId = async (req, res) => {
     try {
-        const budget = await Budget.findById(req.params.id);
+        const budget = await Budget.findOne({ userId: req.params.userId });
+        
         if (!budget) {
-            return res.status(404).json({ message: "Budget not found" });
+            return res.status(404).json({ message: "Budget not found for this user" });
         }
+        
         res.json(budget);
     } catch (error) {
         res.status(400).json({ error: error.message });

@@ -12,10 +12,6 @@ const categorySchema = new mongoose.Schema({
   },budget:{
     type: Number,
     required: true
-  },spent:{
-    type: mongoose.Schema.Types.ObjectId,
-    ref:"Expense",
-    required: true
   },color:{
     type: String,
     required: true

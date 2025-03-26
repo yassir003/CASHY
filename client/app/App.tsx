@@ -6,6 +6,7 @@ import { Ionicons } from "@expo/vector-icons"
 import { Header } from "@/components/Header"
 import { AuthProvider, useAuth } from "@/contexts/AuthContext"
 import { BudgetProvider } from '@/contexts/BudgetContext';
+import { CategoryProvider } from '../contexts/CategoriesContext';
 
 // Auth screens 
 import AuthScreen from "./screens/auth/AuthScreen"
@@ -174,7 +175,9 @@ export default function App() {
   return (
     <AuthProvider>
       <BudgetProvider>
-        <AppNavigator />
+        <CategoryProvider>
+          <AppNavigator />
+        </CategoryProvider>
       </BudgetProvider>
     </AuthProvider>
   );

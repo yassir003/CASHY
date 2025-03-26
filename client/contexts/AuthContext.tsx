@@ -1,15 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import axios from 'axios';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
-const API_URL = 'http://localhost:3000/api';
-
-const api = axios.create({
-  baseURL: API_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
+import api from '@/lib/api'; // Import the separate API instance
 
 // Updated User type to match API response
 type User = {
@@ -46,15 +37,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     const loadStoredData = async () => {
       try {
-        const [storedToken, storedUser] = await Promise.all([
-          AsyncStorage.getItem('auth_token'),
-          AsyncStorage.getItem('user'),
-        ]);
+        const storedToken = localStorage.getItem('auth_token');
+        const storedUser = localStorage.getItem('user');
 
         if (storedToken && storedUser) {
           setToken(storedToken);
           setUser(JSON.parse(storedUser));
-          api.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
         }
       } catch (e) {
         console.error('Failed to load auth data from storage', e);
@@ -66,31 +54,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     loadStoredData();
   }, []);
 
-  useEffect(() => {
-    if (token) {
-      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-    } else {
-      delete api.defaults.headers.common['Authorization'];
-    }
-  }, [token]);
-
-  const storeAuthData = async (authToken: string, userData: User) => {
+  const storeAuthData = (authToken: string, userData: User) => {
     try {
-      await Promise.all([
-        AsyncStorage.setItem('auth_token', authToken),
-        AsyncStorage.setItem('user', JSON.stringify(userData)),
-      ]);
+      localStorage.setItem('auth_token', authToken);
+      localStorage.setItem('user', JSON.stringify(userData));
     } catch (e) {
       console.error('Failed to store auth data', e);
     }
   };
 
-  const clearAuthData = async () => {
+  const clearAuthData = () => {
     try {
-      await Promise.all([
-        AsyncStorage.removeItem('auth_token'),
-        AsyncStorage.removeItem('user'),
-      ]);
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('user');
     } catch (e) {
       console.error('Failed to clear auth data', e);
     }
@@ -111,7 +87,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       
       setToken(authToken);
       setUser(userData);
-      await storeAuthData(authToken, userData);
+      storeAuthData(authToken, userData);
       
     } catch (err) {
       handleAuthError(err, 'Registration');
@@ -134,7 +110,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       
       setToken(authToken);
       setUser(userData);
-      await storeAuthData(authToken, userData);
+      storeAuthData(authToken, userData);
       
     } catch (err) {
       handleAuthError(err, 'Login');
@@ -149,7 +125,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       setToken(null);
       setUser(null);
-      await clearAuthData();
+      clearAuthData();
     } catch (err) {
       console.error('Logout error:', err);
     } finally {
@@ -195,5 +171,3 @@ export const useAuth = () => {
   }
   return context;
 };
-
-export { api };

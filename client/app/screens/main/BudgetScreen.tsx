@@ -1,52 +1,110 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Pressable } from 'react-native';
-import { Home, Utensils, Car, Film, Music, ShoppingBag, Briefcase, Plane, Heart, Smartphone, Plus, Pencil, Trash2, Wallet } from 'lucide-react-native';
+import { Home, Utensils, Car, Film, Music, ShoppingBag, Briefcase, Plane, Heart, Smartphone, Plus, Pencil, Trash2 } from 'lucide-react-native';
 import AddEditCategoryDialog from '@/components/AddEditCategoryDialog';
 import EditTotalBudgetDialog from '@/components/EditTotalBudgetDialog';
-
-interface Category {
-  id: number;
-  name: string;
-  budget: number;
-  spent: number;
-  color: string;
-  icon: string;
-}
+import { useBudget } from '@/contexts/BudgetContext';
+import { Category, useCategories } from '@/contexts/CategoriesContext';
 
 const BudgetScreen = () => {
-  const [categories, setCategories] = useState<Category[]>([
-    { id: 1, name: "Housing", budget: 1500, spent: 1200, color: "#3b82f6", icon: "Home" },
-    { id: 2, name: "Food & Dining", budget: 600, spent: 450, color: "#10b981", icon: "Utensils" },
-    { id: 3, name: "Transportation", budget: 400, spent: 380, color: "#8b5cf6", icon: "Car" },
-    { id: 4, name: "Entertainment", budget: 300, spent: 150, color: "#f97316", icon: "Film" },
-  ]);
-
+  const { budget: contextBudget, checkBudget, setBudget } = useBudget();
+  const { categories, addCategory, updateCategory, deleteCategory, fetchCategories } = useCategories();
+  
   const [isDialogVisible, setIsDialogVisible] = useState(false);
   const [isBudgetDialogVisible, setIsBudgetDialogVisible] = useState(false);
-  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
-  const [totalBudgetValue, setTotalBudgetValue] = useState(2800);
+  const [editingCategory, setEditingCategory] = useState<Partial<Category> | null>(null);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
-  const totalBudget = totalBudgetValue || categories.reduce((sum, category) => sum + category.budget, 0);
-  const totalSpent = categories.reduce((sum, category) => sum + category.spent, 0);
+  // Calculate total budget and spent
+  const totalBudget = contextBudget?.amount || categories.reduce((sum, category) => sum + (category.budget || 0), 0);
+  const totalSpent = categories.reduce((sum, category) => sum + (category.spent || 0), 0);
 
-  const handleUpdateTotalBudget = (newTotal: number) => {
-    const ratio = newTotal / totalBudget;
-    const updatedCategories = categories.map((category) => ({
-      ...category,
-      budget: Math.round(category.budget * ratio),
-    }));
-    setCategories(updatedCategories);
-    setTotalBudgetValue(newTotal);
-    setIsBudgetDialogVisible(false);
+  // Load initial data
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        await checkBudget();
+        await fetchCategories();
+        setFetchError(null);
+      } catch (error: any) {
+        if (error.response?.status === 404 && error.response.data.message === "No categories found") {
+          setFetchError("No categories found");
+        } else {
+          setFetchError("Failed to load categories. Please try again later.");
+        }
+      }
+    };
+    loadData();
+  }, []);
+
+  // Update total budget
+  const handleUpdateTotalBudget = async (newTotal: number) => {
+    try {
+      await setBudget(newTotal);
+      setIsBudgetDialogVisible(false);
+    } catch (error) {
+      console.error('Failed to update budget:', error);
+    }
   };
 
+  // Prepare category for editing or adding
   const handleOpenDialog = (category: Category | null = null) => {
-    setEditingCategory(category);
+    if (category) {
+      setEditingCategory({
+        _id: category._id,
+        name: category.name,
+        budget: category.budget,
+        spent: category.spent || 0,
+        color: category.color,
+        icon: category.icon,
+      });
+    } else {
+      setEditingCategory(null);
+    }
     setIsDialogVisible(true);
   };
 
-  const handleDelete = (id: number) => {
-    setCategories(categories.filter((cat) => cat.id !== id));
+  // Submit category (add or update)
+  const handleCategorySubmit = async (categoryData: Omit<Category, '_id' | 'userId'>) => {
+    try {
+      if (editingCategory && editingCategory._id) {
+        await updateCategory(editingCategory._id, categoryData);
+      } else {
+        await addCategory(categoryData);
+      }
+      setIsDialogVisible(false);
+      await fetchCategories();
+    } catch (error) {
+      console.error('Error saving category:', error);
+    }
+  };
+
+  // Delete category
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteCategory(id);
+      await fetchCategories();
+    } catch (error) {
+      console.error('Error deleting category:', error);
+    }
+  };
+
+  // Render category icon
+  const renderCategoryIcon = (icon: string, color: string) => {
+    const iconComponents = {
+      Home: <Home color={color} size={20} />,
+      Utensils: <Utensils color={color} size={20} />,
+      Car: <Car color={color} size={20} />,
+      Film: <Film color={color} size={20} />,
+      Music: <Music color={color} size={20} />,
+      ShoppingBag: <ShoppingBag color={color} size={20} />,
+      Briefcase: <Briefcase color={color} size={20} />,
+      Plane: <Plane color={color} size={20} />,
+      Heart: <Heart color={color} size={20} />,
+      Smartphone: <Smartphone color={color} size={20} />
+    };
+
+    return iconComponents[icon as keyof typeof iconComponents] || <Home color={color} size={20} />;
   };
 
   return (
@@ -62,13 +120,17 @@ const BudgetScreen = () => {
               </Pressable>
             </View>
           </View>
-          <Text style={styles.totalBudgetAmount}>${totalBudget.toLocaleString()}</Text>
+          <Text style={styles.totalBudgetAmount}>
+            ${(totalBudget.toLocaleString())}
+          </Text>
           <View style={styles.progressContainer}>
-            <Text style={styles.cardText}>Spent: ${totalSpent.toLocaleString()}</Text>
-            <Text style={styles.cardText}>Remaining: ${(totalBudget - totalSpent).toLocaleString()}</Text>
+            <Text style={styles.cardText}>Spent: ${(totalSpent || 0).toLocaleString()}</Text>
+            <Text style={styles.cardText}>Remaining: ${((totalBudget - totalSpent) || 0).toLocaleString()}</Text>
           </View>
           <View style={styles.progressBarBackground}>
-            <View style={[styles.progressBarFill, { width: `${(totalSpent / totalBudget) * 100}%` }]} />
+            <View style={[styles.progressBarFill, { 
+              width: `${totalBudget > 0 ? (totalSpent / totalBudget) * 100 : 0}%` 
+            }]} />
           </View>
         </View>
 
@@ -85,66 +147,58 @@ const BudgetScreen = () => {
         </View>
 
         {/* Categories List */}
-        {categories.map((category) => (
-          <View key={category.id} style={styles.categoryCard}>
-            <View style={styles.categoryHeader}>
-              <View style={[styles.categoryIcon, { backgroundColor: `${category.color}20` }]}>
-                {category.icon === "Home" && <Home color={category.color} size={20} />}
-                {category.icon === "Utensils" && <Utensils color={category.color} size={20} />}
-                {category.icon === "Car" && <Car color={category.color} size={20} />}
-                {category.icon === "Film" && <Film color={category.color} size={20} />}
-                {category.icon === "Music" && <Music color={category.color} size={20} />}
-                {category.icon === "ShoppingBag" && <ShoppingBag color={category.color} size={20} />}
-                {category.icon === "Briefcase" && <Briefcase color={category.color} size={20} />}
-                {category.icon === "Plane" && <Plane color={category.color} size={20} />}
-                {category.icon === "Heart" && <Heart color={category.color} size={20} />}
-                {category.icon === "Smartphone" && <Smartphone color={category.color} size={20} />}
+        {categories.length > 0 ? (
+          categories.map((category) => (
+            <View key={category._id} style={styles.categoryCard}>
+              <View style={styles.categoryHeader}>
+                <View style={[styles.categoryIcon, { backgroundColor: `${category.color}20` }]}>
+                  {renderCategoryIcon(category.icon, category.color)}
+                </View>
+                <Text style={styles.categoryName}>{category.name}</Text>
+                <View style={styles.categoryActions}>
+                  <Pressable onPress={() => handleOpenDialog(category)}>
+                    <Pencil color="#64748b" size={18} />
+                  </Pressable>
+                  <Pressable onPress={() => handleDelete(category._id)}>
+                    <Trash2 color="#ef4444" size={18} />
+                  </Pressable>
+                </View>
               </View>
-              <Text style={styles.categoryName}>{category.name}</Text>
-              <View style={styles.categoryActions}>
-                <Pressable onPress={() => handleOpenDialog(category)}>
-                  <Pencil color="#64748b" size={18} />
-                </Pressable>
-                <Pressable onPress={() => handleDelete(category.id)}>
-                  <Trash2 color="#ef4444" size={18} />
-                </Pressable>
+              <View style={styles.progressContainer}>
+                <Text style={styles.progressText}>
+                  ${((category.spent || 0).toLocaleString())} spent
+                </Text>
+                <Text style={styles.progressText}>
+                  ${((category.budget || 0).toLocaleString())} budget
+                </Text>
+              </View>
+              <View style={styles.progressBarBackground}>
+                <View style={[styles.progressBarFill, { 
+                  width: `${category.budget > 0 ? ((category.spent || 0) / category.budget) * 100 : 0}%`, 
+                  backgroundColor: category.color 
+                }]} />
               </View>
             </View>
-            <View style={styles.progressContainer}>
-              <Text style={styles.progressText}>${category.spent.toLocaleString()} spent</Text>
-              <Text style={styles.progressText}>${category.budget.toLocaleString()} budget</Text>
-            </View>
-            <View style={styles.progressBarBackground}>
-              <View style={[styles.progressBarFill, { 
-                width: `${(category.spent / category.budget) * 100}%`, 
-                backgroundColor: category.color 
-              }]} />
-            </View>
-          </View>
-        ))}
+          ))
+        ) : (
+          <Text style={styles.noCategoriesText}>
+            {fetchError || "No categories created yet"}
+          </Text>
+        )}
       </ScrollView>
 
       {/* Dialogs */}
       <AddEditCategoryDialog
         visible={isDialogVisible}
         onDismiss={() => setIsDialogVisible(false)}
-        category={editingCategory || undefined}
-        onSubmit={(category) => {
-          if (editingCategory) {
-            setCategories(categories.map((cat) => 
-              cat.id === editingCategory.id ? { ...category, id: editingCategory.id } : cat
-            ));
-          } else {
-            setCategories([...categories, { ...category, id: Date.now() }]);
-          }
-          setIsDialogVisible(false);
-        }}
+        category={editingCategory}
+        onSubmit={handleCategorySubmit}
       />
 
       <EditTotalBudgetDialog
         visible={isBudgetDialogVisible}
         onDismiss={() => setIsBudgetDialogVisible(false)}
-        totalBudget={totalBudgetValue}
+        totalBudget={contextBudget?.amount || totalBudget}
         onSubmit={handleUpdateTotalBudget}
       />
     </View>
@@ -273,6 +327,11 @@ const styles = StyleSheet.create({
   progressText: {
     fontSize: 12,
     color: '#64748b',
+  },
+  noCategoriesText: {
+    textAlign: 'center',
+    color: '#64748b',
+    marginTop: 16,
   },
 });
 

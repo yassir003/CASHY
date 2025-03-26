@@ -1,4 +1,4 @@
-import React, { useState, useEffect} from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -57,14 +57,17 @@ const getCategoryIcon = (category: string) => {
 export default function Home() {
   const [recentTransactions, setRecentTransactions] = useState<Transaction[]>(initialTransactions);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const { budget, setBudget } = useBudget();
-  const [showBudgetModal, setShowBudgetModal] = useState(false);
+  const { 
+    budget, 
+    setBudget, 
+    checkBudget, 
+    shouldOpenBudgetModal 
+  } = useBudget();
 
   useEffect(() => {
-    if (budget === null) {
-      setShowBudgetModal(true);
-    }
-  }, [budget]);
+    // Check budget when component mounts
+    checkBudget();
+  }, []);
 
   const handleAddTransaction = () => setIsModalOpen(true);
 
@@ -94,15 +97,15 @@ export default function Home() {
           <Text style={styles.statLabel}>Total Budget</Text>
           <Text style={styles.statValue}>
             {budget !== null 
-              ? `$${budget.toLocaleString('en-US', { minimumFractionDigits: 2 })}`
+              ? `$${budget.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}`
               : '$0.00'}
           </Text>
         </View>
 
-        {/* Add BudgetModal component */}
+        {/* Budget Modal */}
         <BudgetModal
-          visible={showBudgetModal}
-          onClose={() => setShowBudgetModal(false)}
+          visible={shouldOpenBudgetModal}
+          onClose={() => {}}
           onSubmit={setBudget}
         />
       </View>

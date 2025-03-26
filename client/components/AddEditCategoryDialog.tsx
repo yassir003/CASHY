@@ -1,40 +1,71 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Modal, StyleSheet, ScrollView } from 'react-native';
-import { AntDesign } from '@expo/vector-icons'; // For icons
+import { AntDesign } from '@expo/vector-icons';
 import { Home, Utensils, Car, Film, Music, ShoppingBag, Briefcase, Plane, Heart, Smartphone } from 'lucide-react-native';
 
 // Define the type for the category object
 interface Category {
-  id?: number;
+  _id?: string;
   name: string;
   budget: number;
   spent: number;
   color: string;
   icon: string;
+  userId?: string;
 }
 
-// Define the props for the AddEditCategoryDialog component
+// Updated props interface
 interface AddEditCategoryDialogProps {
   visible: boolean;
   onDismiss: () => void;
-  category?: Category;
-  onSubmit: (category: Category) => void;
+  category?: Partial<Category> | null;
+  onSubmit: (categoryData: Omit<Category, '_id' | 'userId'>) => void;
 }
 
-const AddEditCategoryDialog: React.FC<AddEditCategoryDialogProps> = ({ visible, onDismiss, category, onSubmit }) => {
-  const [name, setName] = useState(category?.name || '');
-  const [budget, setBudget] = useState(category?.budget?.toString() || '');
-  const [spent, setSpent] = useState(category?.spent?.toString() || '0');
-  const [color, setColor] = useState(category?.color || '#3b82f6');
-  const [icon, setIcon] = useState(category?.icon || 'Home');
+const AddEditCategoryDialog: React.FC<AddEditCategoryDialogProps> = ({ 
+  visible, 
+  onDismiss, 
+  category, 
+  onSubmit 
+}) => {
+  // Initialize state with default or provided values
+  const [name, setName] = useState('');
+  const [budget, setBudget] = useState('');
+  const [spent, setSpent] = useState('0');
+  const [color, setColor] = useState('#3b82f6');
+  const [icon, setIcon] = useState('Home');
+
+  // Update state when category prop changes
+  useEffect(() => {
+    if (category) {
+      setName(category.name || '');
+      setBudget(category.budget ? category.budget.toString() : '');
+      setSpent(category.spent ? category.spent.toString() : '0');
+      setColor(category.color || '#3b82f6');
+      setIcon(category.icon || 'Home');
+    } else {
+      // Reset to default values when no category is provided
+      setName('');
+      setBudget('');
+      setSpent('0');
+      setColor('#3b82f6');
+      setIcon('Home');
+    }
+  }, [category, visible]);
 
   const colorOptions = ['#3b82f6', '#10b981', '#8b5cf6', '#f97316', '#ef4444', '#14b8a6'];
 
   const handleSubmit = () => {
+    // Validate inputs
+    if (!name.trim()) {
+      // Optional: Add error handling or show an alert
+      return;
+    }
+
     onSubmit({
-      name,
-      budget: Number(budget),
-      spent: Number(spent),
+      name: name.trim(),
+      budget: Number(budget) || 0,
+      spent: Number(spent) || 0,
       color,
       icon,
     });

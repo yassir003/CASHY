@@ -2,12 +2,18 @@ import Category from "../models/categoryModel.js";
 
 // Add a new category
 export const addCategory = async (req, res) => {
-    const { name, description } = req.body;
+    const { name, budget, color, icon } = req.body;
 
     try {
-        const category = new Category({ name, description, userId: req.user.userId });
+        const category = new Category({ 
+            name, 
+            budget, 
+            color, 
+            icon, 
+            userId: req.user.userId 
+        });
         await category.save();
-        res.status(201).json({ message: "Category added successfully" });
+        res.status(201).json({ message: "Category added successfully", category });
     } catch (error) {
         res.status(400).json({ error: error.message });
     }
@@ -29,7 +35,10 @@ export const getCategories = async (req, res) => {
 // Get one category by ID
 export const getOneCategory = async (req, res) => {
     try {
-        const category = await Category.findById(req.params.id);
+        const category = await Category.findOne({ 
+            _id: req.params.id, 
+            userId: req.user.userId 
+        });
         if (!category) {
             return res.status(404).json({ message: "Category not found" });
         }
@@ -41,10 +50,14 @@ export const getOneCategory = async (req, res) => {
 
 // Edit a category
 export const editCategory = async (req, res) => {
-    const { name, description } = req.body;
+    const { name, budget, color, icon } = req.body;
 
     try {
-        const category = await Category.findByIdAndUpdate(req.params.id, { name, description }, { new: true });
+        const category = await Category.findOneAndUpdate(
+            { _id: req.params.id, userId: req.user.userId },
+            { name, budget, color, icon },
+            { new: true }
+        );
         if (!category) {
             return res.status(404).json({ message: "Category not found" });
         }
@@ -57,7 +70,10 @@ export const editCategory = async (req, res) => {
 // Delete a category
 export const deleteCategory = async (req, res) => {
     try {
-        const category = await Category.findByIdAndDelete(req.params.id);
+        const category = await Category.findOneAndDelete({ 
+            _id: req.params.id, 
+            userId: req.user.userId 
+        });
         if (!category) {
             return res.status(404).json({ message: "Category not found" });
         }

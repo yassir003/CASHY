@@ -1,11 +1,11 @@
 import express from "express";
-import { setBudget, getOneBudget, editBudget, deleteBudget } from "../controllers/budgetController.js";
+import { setBudget, getBudgetByUserId, editBudget, deleteBudget } from "../controllers/budgetController.js";
 import authMiddleware from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
 router.post("/", authMiddleware, setBudget);
-router.get("/:id", authMiddleware, getOneBudget);
+router.get("/:userId", authMiddleware, getBudgetByUserId);
 router.put("/:id", authMiddleware, editBudget);
 router.delete("/:id", authMiddleware, deleteBudget);
 

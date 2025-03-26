@@ -1,74 +1,99 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import axios from 'axios';
+import api from '@/lib/api';
+
+interface Budget {
+  _id: string;
+  amount: number;
+  userId: string;
+}
 
 interface BudgetContextType {
-  budget: number | null;
-  setBudget: (budget: number) => Promise<void>;
+  budget: Budget | null;
+  shouldOpenBudgetModal: boolean;
+  setBudget: (amount: number) => Promise<void>;
+  checkBudget: () => Promise<void>;
+  closeBudgetModal: () => void;
 }
 
 const BudgetContext = createContext<BudgetContextType | undefined>(undefined);
 
 export const BudgetProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [budget, setBudgetState] = useState<number | null>(null);
+  const [budget, setBudgetState] = useState<Budget | null>(null);
+  const [shouldOpenBudgetModal, setShouldOpenBudgetModal] = useState(false);
 
-  const getAuthToken = async () => {
+  const getUserId = () => {
+    const userString = localStorage.getItem('user');
+    if (!userString) return null;
     try {
-      const token = await AsyncStorage.getItem('auth_token');
-      if (!token) throw new Error('No authentication token found');
-      return token;
+      return JSON.parse(userString)?.id;
     } catch (error) {
-      console.error('Error retrieving token:', error);
-      throw error;
+      console.error('Error parsing user:', error);
+      return null;
     }
   };
 
-  useEffect(() => {
-    const fetchBudget = async () => {
-      try {
-        const token = await getAuthToken();
-        const { data } = await axios.get('http://localhost:3000/api/budgets', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        setBudgetState(data.budget);
-      } catch (error) {
-        console.error('Error fetching budget:', error);
+  const checkBudget = async () => {
+    try {
+      const userId = getUserId();
+      if (!userId) {
+        setShouldOpenBudgetModal(true);
+        return;
+      }
+
+      const response = await api.get(`/budgets/${userId}`);
+      if (response.data?._id) {
+        setBudgetState(response.data);
+        setShouldOpenBudgetModal(false);
+      } else {
+        setShouldOpenBudgetModal(true);
         setBudgetState(null);
       }
-    };
-    fetchBudget();
-  }, []);
+    } catch (error) {
+      console.error('Error fetching budget:', error);
+      setShouldOpenBudgetModal(true);
+      setBudgetState(null);
+    }
+  };
 
-  const setBudget = async (newBudget: number) => {
+  const setBudget = async (amount: number) => {
     try {
-      const token = await getAuthToken();
-      await axios.post(
-        'http://localhost:3000/api/budgets',
-        { amount: newBudget },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-      setBudgetState(newBudget);
+      const userId = getUserId();
+      if (!userId) throw new Error('User not found');
+
+      let response;
+      if (budget?._id) {
+        // Update existing budget
+        response = await api.put(`/budgets/${budget._id}`, { amount });
+      } else {
+        // Create new budget
+        response = await api.post('/budgets', { amount });
+      }
+
+      setBudgetState(response.data);
+      setShouldOpenBudgetModal(false);
     } catch (error) {
       console.error('Error saving budget:', error);
       throw error;
     }
   };
 
+  const closeBudgetModal = () => {
+    setShouldOpenBudgetModal(false);
+  };
+
   return (
-    <BudgetContext.Provider value={{ budget, setBudget }}>
+    <BudgetContext.Provider value={{ 
+      budget,
+      shouldOpenBudgetModal,
+      setBudget,
+      checkBudget,
+      closeBudgetModal
+    }}>
       {children}
     </BudgetContext.Provider>
   );
 };
 
-// Add this export at the bottom
 export const useBudget = () => {
   const context = useContext(BudgetContext);
   if (!context) throw new Error('useBudget must be used within BudgetProvider');
