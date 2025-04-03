@@ -8,7 +8,16 @@ import {
   SectionList,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { TransactionModal, type Transaction } from "@/components/transaction-modal";
+import { TransactionModal } from "@/components/transaction-modal";
+
+type Transaction = {
+  id: string;
+  name: string;
+  date: string;
+  amount: string;
+  type: "credit" | "debit";
+  category: string;
+};
 
 // Updated mock data with proper dates
 const initialTransactions: Transaction[] = [
@@ -46,7 +55,7 @@ const initialTransactions: Transaction[] = [
   },
 ];
 
-const getCategoryIcon = (category: string) => {
+const getCategoryIcon = (category: string): { name: keyof typeof Ionicons.glyphMap; color: string } => {
   switch (category) {
     case "shopping":
       return { name: "cart", color: "#f59e0b" };
@@ -57,7 +66,7 @@ const getCategoryIcon = (category: string) => {
     case "entertainment":
       return { name: "film", color: "#8b5cf6" };
     default:
-      return { name: "md-card", color: "#6b7280" };
+      return { name: "id-card", color: "#6b7280" };
   }
 };
 
