@@ -8,7 +8,7 @@ interface Category {
   _id?: string;
   name: string;
   budget: number;
-  spent: number;
+  // spent: number;
   color: string;
   icon: string;
   userId?: string;
@@ -31,7 +31,7 @@ const AddEditCategoryDialog: React.FC<AddEditCategoryDialogProps> = ({
   // Initialize state with default or provided values
   const [name, setName] = useState('');
   const [budget, setBudget] = useState('');
-  const [spent, setSpent] = useState('0');
+  // const [spent, setSpent] = useState('0');
   const [color, setColor] = useState('#3b82f6');
   const [icon, setIcon] = useState('Home');
 
@@ -40,14 +40,14 @@ const AddEditCategoryDialog: React.FC<AddEditCategoryDialogProps> = ({
     if (category) {
       setName(category.name || '');
       setBudget(category.budget ? category.budget.toString() : '');
-      setSpent(category.spent ? category.spent.toString() : '0');
+      // setSpent(category.spent ? category.spent.toString() : '0');
       setColor(category.color || '#3b82f6');
       setIcon(category.icon || 'Home');
     } else {
       // Reset to default values when no category is provided
       setName('');
       setBudget('');
-      setSpent('0');
+      // setSpent('0');
       setColor('#3b82f6');
       setIcon('Home');
     }
@@ -65,7 +65,7 @@ const AddEditCategoryDialog: React.FC<AddEditCategoryDialogProps> = ({
     onSubmit({
       name: name.trim(),
       budget: Number(budget) || 0,
-      spent: Number(spent) || 0,
+      // spent: Number(spent) || 0,
       color,
       icon,
     });
@@ -104,7 +104,7 @@ const AddEditCategoryDialog: React.FC<AddEditCategoryDialogProps> = ({
               />
             </View>
 
-            <View style={styles.inputGroup}>
+            {/* <View style={styles.inputGroup}>
               <Text style={styles.label}>Spent Amount ($)</Text>
               <TextInput
                 placeholder="0.00"
@@ -113,7 +113,7 @@ const AddEditCategoryDialog: React.FC<AddEditCategoryDialogProps> = ({
                 keyboardType="numeric"
                 style={styles.input}
               />
-            </View>
+            </View> */}
 
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Color</Text>

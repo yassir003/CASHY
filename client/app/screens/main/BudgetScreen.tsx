@@ -5,19 +5,28 @@ import AddEditCategoryDialog from '@/components/AddEditCategoryDialog';
 import EditTotalBudgetDialog from '@/components/EditTotalBudgetDialog';
 import { useBudget } from '@/contexts/BudgetContext';
 import { Category, useCategories } from '@/contexts/CategoriesContext';
+import { useTransactions } from '@/contexts/TransactionContext';
+
+// Define a new interface that extends Category but makes spent optional
+// This will be our internal representation with calculated spent
+interface CategoryWithSpent extends Omit<Category, 'spent'> {
+  spent?: number;
+}
 
 const BudgetScreen = () => {
   const { budget: contextBudget, checkBudget, setBudget } = useBudget();
   const { categories, addCategory, updateCategory, deleteCategory, fetchCategories } = useCategories();
+  const { transactions, fetchTransactions } = useTransactions();
   
   const [isDialogVisible, setIsDialogVisible] = useState(false);
   const [isBudgetDialogVisible, setIsBudgetDialogVisible] = useState(false);
-  const [editingCategory, setEditingCategory] = useState<Partial<Category> | null>(null);
+  const [editingCategory, setEditingCategory] = useState<Partial<CategoryWithSpent> | null>(null);
   const [fetchError, setFetchError] = useState<string | null>(null);
+  const [categoriesWithSpent, setCategoriesWithSpent] = useState<CategoryWithSpent[]>([]);
 
   // Calculate total budget and spent
-  const totalBudget = contextBudget?.amount || categories.reduce((sum, category) => sum + (category.budget || 0), 0);
-  const totalSpent = categories.reduce((sum, category) => sum + (category.spent || 0), 0);
+  const totalBudget = contextBudget?.amount || categoriesWithSpent.reduce((sum, category) => sum + (category.budget || 0), 0);
+  const totalSpent = categoriesWithSpent.reduce((sum, category) => sum + (category.spent || 0), 0);
 
   // Load initial data
   useEffect(() => {
@@ -25,6 +34,7 @@ const BudgetScreen = () => {
       try {
         await checkBudget();
         await fetchCategories();
+        await fetchTransactions();
         setFetchError(null);
       } catch (error: any) {
         if (error.response?.status === 404 && error.response.data.message === "No categories found") {
@@ -37,6 +47,40 @@ const BudgetScreen = () => {
     loadData();
   }, []);
 
+  // Calculate spent amount for each category when transactions or categories change
+  useEffect(() => {
+    if (categories.length > 0) {
+      // Create a map to sum up expenses by category
+      const categorySpentMap: Record<string, number> = {};
+      
+      // Process only expense transactions
+      transactions
+        .filter(transaction => transaction.type === 'expense')
+        .forEach(transaction => {
+          const categoryId = transaction.category;
+          const amount = parseFloat(transaction.amount);
+          
+          if (!isNaN(amount) && categoryId) {
+            if (categoryId in categorySpentMap) {
+              categorySpentMap[categoryId] += amount;
+            } else {
+              categorySpentMap[categoryId] = amount;
+            }
+          }
+        });
+      
+      // Update each category with its spent amount
+      const updatedCategories = categories.map(category => ({
+        ...category,
+        spent: categorySpentMap[category._id] || 0
+      }));
+      
+      setCategoriesWithSpent(updatedCategories);
+    } else {
+      setCategoriesWithSpent([]);
+    }
+  }, [categories, transactions]);
+
   // Update total budget
   const handleUpdateTotalBudget = async (newTotal: number) => {
     try {
@@ -48,16 +92,11 @@ const BudgetScreen = () => {
   };
 
   // Prepare category for editing or adding
-  const handleOpenDialog = (category: Category | null = null) => {
+  const handleOpenDialog = (category: CategoryWithSpent | null = null) => {
     if (category) {
-      setEditingCategory({
-        _id: category._id,
-        name: category.name,
-        budget: category.budget,
-        spent: category.spent || 0,
-        color: category.color,
-        icon: category.icon,
-      });
+      // Omit the spent field as it's calculated, not editable
+      const { spent, ...categoryWithoutSpent } = category;
+      setEditingCategory(categoryWithoutSpent);
     } else {
       setEditingCategory(null);
     }
@@ -65,7 +104,7 @@ const BudgetScreen = () => {
   };
 
   // Submit category (add or update)
-  const handleCategorySubmit = async (categoryData: Omit<Category, '_id' | 'userId'>) => {
+  const handleCategorySubmit = async (categoryData: Omit<Category, '_id' | 'userId' | 'spent'>) => {
     try {
       if (editingCategory && editingCategory._id) {
         await updateCategory(editingCategory._id, categoryData);
@@ -129,7 +168,7 @@ const BudgetScreen = () => {
           </View>
           <View style={styles.progressBarBackground}>
             <View style={[styles.progressBarFill, { 
-              width: `${totalBudget > 0 ? (totalSpent / totalBudget) * 100 : 0}%` 
+              width: `${totalBudget > 0 ? Math.min((totalSpent / totalBudget) * 100, 100) : 0}%` 
             }]} />
           </View>
         </View>
@@ -147,8 +186,8 @@ const BudgetScreen = () => {
         </View>
 
         {/* Categories List */}
-        {categories.length > 0 ? (
-          categories.map((category) => (
+        {categoriesWithSpent.length > 0 ? (
+          categoriesWithSpent.map((category) => (
             <View key={category._id} style={styles.categoryCard}>
               <View style={styles.categoryHeader}>
                 <View style={[styles.categoryIcon, { backgroundColor: `${category.color}20` }]}>
@@ -174,7 +213,7 @@ const BudgetScreen = () => {
               </View>
               <View style={styles.progressBarBackground}>
                 <View style={[styles.progressBarFill, { 
-                  width: `${category.budget > 0 ? ((category.spent || 0) / category.budget) * 100 : 0}%`, 
+                  width: `${category.budget > 0 ? Math.min(((category.spent || 0) / category.budget) * 100, 100) : 0}%`, 
                   backgroundColor: category.color 
                 }]} />
               </View>

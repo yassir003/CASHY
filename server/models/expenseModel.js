@@ -1,6 +1,10 @@
 import mongoose from "mongoose";
 
 const expenseSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: true
+  },
   amount: {
     type: Number,
     required: true
@@ -9,13 +13,13 @@ const expenseSchema = new mongoose.Schema({
     type: Date,
     required: true
   },
-  description: {
+  type: {
     type: String,
+    enum: ["income", "expense"],
     required: true
   },
   categoryId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Category",
+    type: String,
     required: true
   },
   userId: {

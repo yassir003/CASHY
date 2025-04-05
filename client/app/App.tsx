@@ -7,6 +7,7 @@ import { Header } from "@/components/Header"
 import { AuthProvider, useAuth } from "@/contexts/AuthContext"
 import { BudgetProvider } from '@/contexts/BudgetContext';
 import { CategoryProvider } from '../contexts/CategoriesContext';
+import { TransactionProvider } from '../contexts/TransactionContext';
 
 // Auth screens 
 import AuthScreen from "./screens/auth/AuthScreen"
@@ -176,7 +177,9 @@ export default function App() {
     <AuthProvider>
       <BudgetProvider>
         <CategoryProvider>
-          <AppNavigator />
+          <TransactionProvider>
+            <AppNavigator />
+          </TransactionProvider>
         </CategoryProvider>
       </BudgetProvider>
     </AuthProvider>

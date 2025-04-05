@@ -7,16 +7,37 @@ import {
   Modal,
   StyleSheet,
   ScrollView,
+  Platform,
 } from "react-native";
-import { Picker } from "@react-native-picker/picker"; // For dropdown
-import { AntDesign, Feather } from "@expo/vector-icons"; // For icons
+import { AntDesign, Feather } from "@expo/vector-icons";
+import { useCategories } from "@/contexts/CategoriesContext";
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { format } from 'date-fns';
+import {
+  Home,
+  Utensils,
+  Car,
+  Film,
+  Music,
+  ShoppingBag,
+  Briefcase,
+  Plane,
+  Heart,
+  Smartphone,
+  Plus,
+  Pencil,
+  Trash2,
+} from "lucide-react-native";
+
+// Define an IconType to match the icons object
+type IconType = keyof typeof icons;
 
 export type Transaction = {
   id: string;
   name: string;
-  date: string; // Remove any '?' that might make this optional
+  date: string;
   amount: string;
-  type: "credit" | "debit";
+  type: "income" | "expense";
   category: string;
 };
 
@@ -28,6 +49,27 @@ type TransactionModalProps = {
   isEditing?: boolean;
 };
 
+type IconProps = {
+  size: number;
+  color: string;
+};
+
+const icons = {
+  Home,
+  Utensils,
+  Car,
+  Film,
+  Music,
+  ShoppingBag,
+  Briefcase,
+  Plane,
+  Heart,
+  Smartphone,
+  Plus,
+  Pencil,
+  Trash2,
+};
+
 export function TransactionModal({
   isOpen,
   onClose,
@@ -35,44 +77,69 @@ export function TransactionModal({
   transaction,
   isEditing = false,
 }: TransactionModalProps) {
+  const { categories, fetchCategories } = useCategories();
   const [formData, setFormData] = useState<Transaction>({
     id: "",
     name: "",
     amount: "",
     date: "",
-    type: "debit",
-    category: "general",
+    type: "expense",
+    category: "",
   });
+  const [showCategoryPicker, setShowCategoryPicker] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+
+  const selectedCategory = categories.find((c) => c._id === formData.category);
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchCategories();
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     if (transaction && isEditing) {
       setFormData(transaction);
     } else {
-      // Generate current date in format "YYYY-MM-DD"
       const today = new Date();
-      const formattedDate = today.toISOString().split("T")[0];
+      const formattedDate = format(today, 'yyyy-MM-dd');
+      const defaultCategory = categories[0]?._id || "";
 
       setFormData({
         id: Math.random().toString(36).substring(2, 9),
         name: "",
         amount: "",
         date: formattedDate,
-        type: "debit",
-        category: "general",
+        type: "expense",
+        category: defaultCategory,
       });
     }
-  }, [transaction, isEditing, isOpen]);
+  }, [transaction, isEditing, isOpen, categories]);
 
   const handleChange = (name: string, value: string) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleTypeChange = (value: "credit" | "debit") => {
+  const handleTypeChange = (value: "income" | "expense") => {
     setFormData((prev) => ({ ...prev, type: value }));
   };
 
   const handleCategoryChange = (value: string) => {
     setFormData((prev) => ({ ...prev, category: value }));
+  };
+
+  const handleDateChange = (event: any, selectedDate?: Date) => {
+    setShowDatePicker(false);
+    if (selectedDate) {
+      const formattedDate = format(selectedDate, 'yyyy-MM-dd');
+      handleChange('date', formattedDate);
+    }
+  };
+
+  const getCategoryIcon = (iconName: string) => {
+    const iconProps = { size: 20, color: "#fff" };
+    const IconComponent = (icons[iconName as IconType] || icons.Home);
+    return <IconComponent {...iconProps} />;
   };
 
   const handleSubmit = () => {
@@ -116,12 +183,27 @@ export function TransactionModal({
 
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Date</Text>
-              <TextInput
-                style={styles.input}
-                value={formData.date}
-                onChangeText={(value) => handleChange("date", value)}
-                placeholder="YYYY-MM-DD"
-              />
+              <TouchableOpacity 
+                onPress={() => setShowDatePicker(true)}
+                style={styles.dateInput}
+              >
+                <TextInput
+                  style={styles.input}
+                  value={formData.date ? format(new Date(formData.date), 'MMM dd, yyyy') : ''}
+                  placeholder="Select date"
+                  editable={false}
+                  pointerEvents="none"
+                />
+              </TouchableOpacity>
+
+              {showDatePicker && (
+                <DateTimePicker
+                  value={new Date(formData.date)}
+                  mode="date"
+                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                  onChange={handleDateChange}
+                />
+              )}
             </View>
 
             <View style={styles.inputGroup}>
@@ -129,23 +211,23 @@ export function TransactionModal({
               <View style={styles.radioGroup}>
                 <TouchableOpacity
                   style={styles.radioButton}
-                  onPress={() => handleTypeChange("debit")}
+                  onPress={() => handleTypeChange("expense")}
                 >
                   <Feather
-                    name={formData.type === "debit" ? "check-circle" : "circle"}
+                    name={formData.type === "expense" ? "check-circle" : "circle"}
                     size={20}
-                    color={formData.type === "debit" ? "#3b82f6" : "#ccc"}
+                    color={formData.type === "expense" ? "#3b82f6" : "#ccc"}
                   />
                   <Text style={styles.radioLabel}>Expense</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.radioButton}
-                  onPress={() => handleTypeChange("credit")}
+                  onPress={() => handleTypeChange("income")}
                 >
                   <Feather
-                    name={formData.type === "credit" ? "check-circle" : "circle"}
+                    name={formData.type === "income" ? "check-circle" : "circle"}
                     size={20}
-                    color={formData.type === "credit" ? "#3b82f6" : "#ccc"}
+                    color={formData.type === "income" ? "#3b82f6" : "#ccc"}
                   />
                   <Text style={styles.radioLabel}>Income</Text>
                 </TouchableOpacity>
@@ -154,21 +236,60 @@ export function TransactionModal({
 
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Category</Text>
-              <Picker
-                selectedValue={formData.category}
-                onValueChange={handleCategoryChange}
-                style={styles.picker}
+              <TouchableOpacity
+                style={styles.categoryPickerTrigger}
+                onPress={() => setShowCategoryPicker(true)}
               >
-                <Picker.Item label="General" value="general" />
-                <Picker.Item label="Food & Dining" value="food" />
-                <Picker.Item label="Shopping" value="shopping" />
-                <Picker.Item label="Housing" value="housing" />
-                <Picker.Item label="Transportation" value="transportation" />
-                <Picker.Item label="Entertainment" value="entertainment" />
-                <Picker.Item label="Utilities" value="utilities" />
-                <Picker.Item label="Income" value="income" />
-                <Picker.Item label="Other" value="other" />
-              </Picker>
+                <View
+                  style={[
+                    styles.categoryColor,
+                    { backgroundColor: selectedCategory?.color || "#ccc" },
+                  ]}
+                >
+                  {selectedCategory
+                    ? getCategoryIcon(selectedCategory.icon)
+                    : getCategoryIcon("")}
+                </View>
+                <Text style={styles.categoryPickerText}>
+                  {selectedCategory?.name || "Select Category"}
+                </Text>
+              </TouchableOpacity>
+
+              <Modal
+                visible={showCategoryPicker}
+                transparent={true}
+                animationType="slide"
+                onRequestClose={() => setShowCategoryPicker(false)}
+              >
+                <View style={styles.categoryModalOverlay}>
+                  <View style={styles.categoryModalContent}>
+                    <ScrollView>
+                      {categories.map((category) => (
+                        <TouchableOpacity
+                          key={category._id}
+                          style={styles.categoryItem}
+                          onPress={() => {
+                            handleCategoryChange(category._id);
+                            setShowCategoryPicker(false);
+                          }}
+                        >
+                          <View
+                            style={[
+                              styles.categoryColor,
+                              { backgroundColor: category.color },
+                            ]}
+                          >
+                            {getCategoryIcon(category.icon)}
+                          </View>
+                          <Text style={styles.categoryText}>
+                            {category.name}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </ScrollView>
+                  </View>
+                </View>
+              </Modal>
             </View>
           </ScrollView>
 
@@ -186,89 +307,133 @@ export function TransactionModal({
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    justifyContent: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    justifyContent: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.4)",
   },
   modalContent: {
-    backgroundColor: '#ffffff',
+    backgroundColor: "#ffffff",
     marginHorizontal: 20,
     borderRadius: 12,
     padding: 16,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 4,
   },
   modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 24,
   },
   modalTitle: {
     fontSize: 20,
-    fontWeight: '600',
-    color: '#1e293b',
+    fontWeight: "600",
+    color: "#1e293b",
   },
   closeButton: {
     padding: 4,
   },
   formContainer: {
-    maxHeight: '80%',
+    maxHeight: "80%",
   },
   inputGroup: {
     marginBottom: 16,
   },
   label: {
     fontSize: 14,
-    color: '#64748b',
+    color: "#64748b",
     marginBottom: 8,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   input: {
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: "#e2e8f0",
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
-    color: '#1e293b',
+    color: "#1e293b",
+  },
+  dateInput: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   radioGroup: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 24,
   },
   radioButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   radioLabel: {
     marginLeft: 8,
     fontSize: 16,
-    color: '#1e293b',
-    fontWeight: '500',
-  },
-  picker: {
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    borderRadius: 8,
-    backgroundColor: '#ffffff',
+    color: "#1e293b",
+    fontWeight: "500",
   },
   saveButton: {
-    backgroundColor: '#3b82f6',
+    backgroundColor: "#3b82f6",
     borderRadius: 8,
     padding: 16,
     marginTop: 16,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
   },
   saveButtonText: {
-    color: '#ffffff',
+    color: "#ffffff",
     fontSize: 16,
-    fontWeight: '600',
-    textAlign: 'center',
+    fontWeight: "600",
+    textAlign: "center",
+  },
+  categoryPickerTrigger: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    borderRadius: 8,
+    padding: 12,
+    gap: 12,
+  },
+  categoryColor: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  categoryPickerText: {
+    flex: 1,
+    fontSize: 16,
+    color: "#1e293b",
+  },
+  categoryModalOverlay: {
+    flex: 1,
+    justifyContent: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.4)",
+  },
+  categoryModalContent: {
+    backgroundColor: "#fff",
+    marginHorizontal: 20,
+    borderRadius: 12,
+    padding: 16,
+    maxHeight: "60%",
+  },
+  categoryItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 12,
+    gap: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f1f5f9",
+  },
+  categoryText: {
+    flex: 1,
+    fontSize: 16,
+    color: "#1e293b",
   },
 });

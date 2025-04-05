@@ -2,10 +2,10 @@ import Expense from "../models/expenseModel.js";
 
 // Add a new expense
 export const addExpense = async (req, res) => {
-    const { amount, date, description, categoryId } = req.body;
+    const { name, amount, date, type, categoryId } = req.body;
 
     try {
-        const expense = new Expense({ amount, date, description, categoryId, userId: req.user.userId });
+        const expense = new Expense({name, amount, date, categoryId, type,  userId: req.user.userId });
         await expense.save();
         res.status(201).json({ message: "Expense added successfully" });
     } catch (error) {
@@ -16,7 +16,9 @@ export const addExpense = async (req, res) => {
 // Get all expenses for a user
 export const getExpenses = async (req, res) => {
     try {
-        const expenses = await Expense.find({ userId: req.user.userId });
+        const expenses = await Expense.find({ userId: req.user.userId })
+            .populate('categoryId', 'name color icon'); // Populate category details
+            
         if (!expenses.length) {
             return res.status(404).json({ message: "No expenses found" });
         }
@@ -29,7 +31,9 @@ export const getExpenses = async (req, res) => {
 // Get one expense by ID
 export const getOneExpense = async (req, res) => {
     try {
-        const expense = await Expense.findById(req.params.id);
+        const expense = await Expense.findById(req.params.id)
+            .populate('categoryId', 'name color icon');
+            
         if (!expense) {
             return res.status(404).json({ message: "Expense not found" });
         }
@@ -41,10 +45,15 @@ export const getOneExpense = async (req, res) => {
 
 // Edit an expense
 export const editExpense = async (req, res) => {
-    const { amount, date, description, categoryId } = req.body;
+    const { name, amount, date, type, categoryId } = req.body;
 
     try {
-        const expense = await Expense.findByIdAndUpdate(req.params.id, { amount, date, description, categoryId }, { new: true });
+        const expense = await Expense.findByIdAndUpdate(
+            req.params.id, 
+            { name, amount, date, type, categoryId }, 
+            { new: true }
+        ).populate('categoryId', 'name color icon');
+        
         if (!expense) {
             return res.status(404).json({ message: "Expense not found" });
         }
@@ -71,16 +80,17 @@ export const deleteExpense = async (req, res) => {
 // Get the last 5 expenses for the current month
 export const getLastFiveThisMonthExpenses = async (req, res) => {
     try {
-        const today = new Date(); // Get the current date
-        const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1); // First day of the month
-        const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0); // Last day of the month
+        const today = new Date();
+        const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+        const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
 
         const expenses = await Expense.find({
-            userId: req.user.userId, // Filter by user
-            date: { $gte: startOfMonth, $lte: endOfMonth }, // Filter by date range (this month)
+            userId: req.user.userId,
+            date: { $gte: startOfMonth, $lte: endOfMonth },
         })
-            .sort({ date: -1 }) // Sort by date in descending order (most recent first)
-            .limit(5); // Limit the results to 5
+            .populate('categoryId', 'name color icon')
+            .sort({ date: -1 })
+            .limit(5);
 
         if (!expenses.length) {
             return res.status(404).json({ message: "No expenses found for this month" });
@@ -95,14 +105,14 @@ export const getLastFiveThisMonthExpenses = async (req, res) => {
 // Get expenses for the current month
 export const getThisMonthExpenses = async (req, res) => {
     try {
-        const today = new Date(); // Get the current date
-        const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1); // First day of the month
-        const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0); // Last day of the month
+        const today = new Date();
+        const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+        const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
 
         const expenses = await Expense.find({
-            userId: req.user.userId, // Filter by user
-            date: { $gte: startOfMonth, $lte: endOfMonth }, // Filter by date range (this month)
-        });
+            userId: req.user.userId,
+            date: { $gte: startOfMonth, $lte: endOfMonth },
+        }).populate('categoryId', 'name color icon');
 
         if (!expenses.length) {
             return res.status(404).json({ message: "No expenses found for this month" });

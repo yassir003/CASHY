@@ -5,7 +5,7 @@ export interface Category {
   _id: string;
   name: string;
   budget: number;
-  spent: number;
+  // spent: number;
   color: string;
   icon: string;
   userId: string;
