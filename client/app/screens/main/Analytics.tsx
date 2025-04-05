@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Dimensions } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { View, Text, StyleSheet, ScrollView, Dimensions } from 'react-native';
+import { VictoryPie, VictoryBar, VictoryChart, VictoryAxis, VictoryTheme } from 'victory';
 
 interface ExpenseCategory {
   name: string;
@@ -9,159 +9,131 @@ interface ExpenseCategory {
 }
 
 const AnalyticsDashboard: React.FC = () => {
-  const [activeTab, setActiveTab] = useState('Overview');
-  const [selectedMonth, setSelectedMonth] = useState('March 2025');
-  const [showMonthPicker, setShowMonthPicker] = useState(false);
+  const [selectedMonth] = useState('March 2025');
   
-  const screenWidth = Dimensions.get('window').width;
-  
+  // Spending by category data
   const expenseCategories: ExpenseCategory[] = [
-    { name: 'Food & Drink', amount: 600, color: '#4285F4' },
-    { name: 'Transportation', amount: 100, color: '#34A853' },
-    { name: 'Entertainment', amount: 195, color: '#FBBC05' },
-    { name: 'Shopping', amount: 200, color: '#7B61FF' },
-    { name: 'Utilities', amount: 110, color: '#EA4335' },
-    { name: 'Other', amount: 75, color: '#9AA0A6' },
+    { name: 'Food & Drink', amount: 600, color: '#FF6384' },
+    { name: 'Transportation', amount: 100, color: '#36A2EB' },
+    { name: 'Entertainment', amount: 195, color: '#FFCE56' },
+    { name: 'Shopping', amount: 200, color: '#4BC0C0' },
+    { name: 'Utilities', amount: 110, color: '#9966FF' },
+    { name: 'Other', amount: 75, color: '#FF9F40' },
+  ];
+  
+  // Monthly income vs expenses data
+  const monthlyData = [
+    { month: 'Jan', income: 3200, expenses: 2800 },
+    { month: 'Feb', income: 3400, expenses: 2950 },
+    { month: 'Mar', income: 3800, expenses: 1280 },
+    { month: 'Apr', income: 3500, expenses: 2400 },
+    { month: 'May', income: 4000, expenses: 3000 },
   ];
   
   const totalSpending = expenseCategories.reduce((sum, category) => sum + category.amount, 0);
   
-  // Simple bar chart to simulate the line chart
-  const months = ['Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'];
-  const incomeData = [1800, 1950, 2100, 1900, 2000, 2200];
-  const expenseData = [1400, 1500, 1650, 1200, 1300, 1105];
-  
-  // Calculate the maximum value to normalize bar heights
-  const maxValue = Math.max(...incomeData, ...expenseData);
-  
-  // Calculate percentage for pie chart segments
+  // Format data for VictoryPie
+  const pieChartData = expenseCategories.map(category => ({
+    x: category.name,
+    y: category.amount,
+    color: category.color
+  }));
+
+  // Calculate percentage for each category
   const calculatePercentage = (amount: number) => {
     return (amount / totalSpending) * 100;
   };
 
   return (
     <ScrollView style={styles.container}>
-      {/* Header
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="white" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Analytics</Text>
-      </View> */}
-      
-      {/* Month selector */}
-      {/* <View style={styles.monthSelector}>
-        <TouchableOpacity 
-          style={styles.monthButton}
-          onPress={() => setShowMonthPicker(!showMonthPicker)}
-        >
-          <Text style={styles.monthText}>{selectedMonth}</Text>
-          <Ionicons name={showMonthPicker ? "chevron-up" : "chevron-down"} size={20} color="black" />
-        </TouchableOpacity>
-        
-        <TouchableOpacity style={styles.compareButton}>
-          <Text style={styles.compareText}>Compare</Text>
-        </TouchableOpacity>
-      </View> */}
-      
-      {/* Tabs */}
-      <View style={styles.tabContainer}>
-        {['Overview', 'Income', 'Expenses'].map((tab) => (
-          <TouchableOpacity
-            key={tab}
-            style={[styles.tab, activeTab === tab && styles.activeTab]}
-            onPress={() => setActiveTab(tab)}
-          >
-            <Text style={[styles.tabText, activeTab === tab && styles.activeTabText]}>{tab}</Text>
-          </TouchableOpacity>
-        ))}
+        <Text style={styles.headerTitle}>Spending Analytics</Text>
+        <Text style={styles.headerSubtitle}>{selectedMonth}</Text>
       </View>
       
-      {/* Income vs Expenses Chart (simplified) */}
+      {/* Bar Chart for Income vs Expenses */}
       <View style={styles.chartContainer}>
-        <Text style={styles.chartTitle}>Income vs Expenses</Text>
-        <View style={styles.barChartContainer}>
-          {months.map((month, index) => (
-            <View key={month} style={styles.barGroup}>
-              <View style={styles.barColumn}>
-                <View 
-                  style={[
-                    styles.bar, 
-                    styles.incomeBar, 
-                    { height: (incomeData[index] / maxValue) * 150 }
-                  ]} 
-                />
-                <View 
-                  style={[
-                    styles.bar, 
-                    styles.expenseBar, 
-                    { height: (expenseData[index] / maxValue) * 150 }
-                  ]} 
-                />
-              </View>
-              <Text style={styles.barLabel}>{month}</Text>
-            </View>
-          ))}
-        </View>
-        <View style={styles.legendContainer}>
+        <Text style={styles.chartTitle}>Monthly Income vs Expenses</Text>
+        
+        <VictoryChart
+          theme={VictoryTheme.material}
+          domainPadding={20}
+          width={Dimensions.get('window').width - 32}
+          height={300}
+        >
+          <VictoryAxis
+            tickValues={monthlyData.map(data => data.month)}
+            tickFormat={monthlyData.map(data => data.month)}
+          />
+          <VictoryAxis
+            dependentAxis
+            tickFormat={(x) => `$${x / 1000}k`}
+          />
+          <VictoryBar
+            data={monthlyData}
+            x="month"
+            y="income"
+            style={{ data: { fill: "#4BC0C0" } }}
+            barWidth={15}
+          />
+          <VictoryBar
+            data={monthlyData}
+            x="month"
+            y="expenses"
+            style={{ data: { fill: "#FF6384" } }}
+            barWidth={15}
+          />
+        </VictoryChart>
+        
+        <View style={styles.barLegendContainer}>
           <View style={styles.legendItem}>
-            <View style={[styles.legendDot, { backgroundColor: '#4285F4' }]} />
+            <View style={[styles.legendDot, { backgroundColor: '#4BC0C0' }]} />
             <Text style={styles.legendText}>Income</Text>
           </View>
           <View style={styles.legendItem}>
-            <View style={[styles.legendDot, { backgroundColor: '#EA4335' }]} />
+            <View style={[styles.legendDot, { backgroundColor: '#FF6384' }]} />
             <Text style={styles.legendText}>Expenses</Text>
           </View>
         </View>
       </View>
       
-      {/* Spending by Category */}
-      <View style={styles.spendingContainer}>
-        <Text style={styles.spendingTitle}>Spending by Category</Text>
+      {/* Pie Chart for Spending Categories */}
+      <View style={styles.chartContainer}>
+        <Text style={styles.chartTitle}>Spending by Category</Text>
         
-        <View style={styles.pieChartContainer}>
-          {/* Simple pie chart using Views */}
-          <View style={styles.pieChart}>
-            {expenseCategories.map((category, index) => {
-              const percentage = calculatePercentage(category.amount);
-              return (
-                <View 
-                  key={category.name}
-                  style={[
-                    styles.pieSegment,
-                    { 
-                      backgroundColor: category.color,
-                      width: 60,
-                      height: 60,
-                      borderRadius: 30,
-                      transform: [
-                        { translateX: Math.cos(index * 60 * Math.PI / 180) * 30 },
-                        { translateY: Math.sin(index * 60 * Math.PI / 180) * 30 }
-                      ],
-                      opacity: percentage / 100 + 0.3, 
-                    }
-                  ]}
-                />
-              );
-            })}
-          </View>
+        <View style={styles.pieChartWrapper}>
+          <VictoryPie
+            data={pieChartData}
+            colorScale={pieChartData.map(d => d.color)}
+            innerRadius={80}
+            padAngle={2}
+            width={Dimensions.get('window').width - 32}
+            height={300}
+            style={{
+              labels: {
+                fill: 'white',
+                fontSize: 12,
+                fontWeight: 'bold',
+              }
+            }}
+            labelRadius={({ innerRadius }) => (typeof innerRadius === 'number' ? innerRadius : 0) + 50}
+            labels={({ datum }) => `${datum.x}\n$${datum.y}`}
+          />
           
           <View style={styles.totalSpendingContainer}>
-            <Text style={styles.totalSpendingLabel}>Total Spending</Text>
-            <Text style={styles.totalSpendingAmount}>${totalSpending.toLocaleString()}</Text>
-            <Text style={styles.totalSpendingPeriod}>This month</Text>
+            <Text style={styles.totalSpendingLabel}>Total</Text>
+            <Text style={styles.totalSpendingAmount}>${totalSpending}</Text>
           </View>
         </View>
         
-        {/* Categories list */}
-        <View style={styles.categoriesList}>
+        {/* Categories Legend */}
+        <View style={styles.legendContainer}>
           {expenseCategories.map((category) => (
-            <View key={category.name} style={styles.categoryItem}>
-              <View style={styles.categoryLeft}>
-                <View style={[styles.categoryDot, { backgroundColor: category.color }]} />
-                <Text style={styles.categoryName}>{category.name}</Text>
-              </View>
-              <Text style={styles.categoryAmount}>${category.amount}</Text>
+            <View key={category.name} style={styles.legendItem}>
+              <View style={[styles.legendDot, { backgroundColor: category.color }]} />
+              <Text style={styles.legendText}>{category.name}</Text>
+              <Text style={styles.legendAmount}>${category.amount}</Text>
+              <Text style={styles.legendPercent}>{Math.round(calculatePercentage(category.amount))}%</Text>
             </View>
           ))}
         </View>
@@ -176,211 +148,88 @@ const styles = StyleSheet.create({
     backgroundColor: '#f5f6fa',
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
     backgroundColor: '#4285F4',
-    paddingVertical: 16,
+    paddingVertical: 20,
     paddingHorizontal: 16,
-  },
-  backButton: {
-    marginRight: 16,
   },
   headerTitle: {
     color: 'white',
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: '600',
   },
-  monthSelector: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    backgroundColor: 'white',
-  },
-  monthButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  monthText: {
+  headerSubtitle: {
+    color: 'white',
     fontSize: 16,
-    fontWeight: '600',
-    marginRight: 8,
-  },
-  compareButton: {
-    borderWidth: 1,
-    borderColor: '#4285F4',
-    borderRadius: 4,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-  },
-  compareText: {
-    color: '#4285F4',
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  tabContainer: {
-    flexDirection: 'row',
-    backgroundColor: '#f0f0f0',
-    borderRadius: 8,
-    margin: 16,
-    padding: 4,
-  },
-  tab: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: 12,
-    borderRadius: 4,
-  },
-  activeTab: {
-    backgroundColor: 'white',
-  },
-  tabText: {
-    color: '#888',
-    fontWeight: '500',
-  },
-  activeTabText: {
-    color: 'black',
-    fontWeight: '600',
+    marginTop: 4,
+    opacity: 0.8,
   },
   chartContainer: {
     backgroundColor: 'white',
     borderRadius: 8,
     margin: 16,
-    marginTop: 0,
     padding: 16,
+    alignItems: 'center',
   },
   chartTitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '600',
     marginBottom: 16,
+    alignSelf: 'flex-start',
   },
-  barChartContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-end',
-    height: 180,
-    marginVertical: 16,
-  },
-  barGroup: {
-    alignItems: 'center',
-    width: '16%',
-  },
-  barColumn: {
-    alignItems: 'center',
-    width: '100%',
-  },
-  bar: {
-    width: 12,
-    marginHorizontal: 4,
-    borderRadius: 2,
-  },
-  incomeBar: {
-    backgroundColor: '#4285F4',
-    marginBottom: 1,
-  },
-  expenseBar: {
-    backgroundColor: '#EA4335',
-    position: 'absolute',
-    left: '50%',
-    marginLeft: -2,
-  },
-  barLabel: {
-    marginTop: 8,
-    fontSize: 12,
-    color: '#666',
-  },
-  legendContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: 8,
-  },
-  legendItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginHorizontal: 12,
-  },
-  legendDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    marginRight: 6,
-  },
-  legendText: {
-    color: '#333',
-  },
-  spendingContainer: {
-    backgroundColor: 'white',
-    borderRadius: 8,
-    margin: 16,
-    marginTop: 0,
-    padding: 16,
-  },
-  spendingTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 16,
-  },
-  pieChartContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 24,
-  },
-  pieChart: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: '#f0f0f0',
+  pieChartWrapper: {
     position: 'relative',
-    justifyContent: 'center',
     alignItems: 'center',
-  },
-  pieSegment: {
-    position: 'absolute',
+    justifyContent: 'center',
+    marginBottom: 20,
   },
   totalSpendingContainer: {
-    flex: 1,
+    position: 'absolute',
     alignItems: 'center',
+    justifyContent: 'center',
   },
   totalSpendingLabel: {
     fontSize: 14,
-    color: '#333',
+    color: '#666',
   },
   totalSpendingAmount: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginVertical: 4,
+    color: '#333',
   },
-  totalSpendingPeriod: {
-    fontSize: 12,
-    color: '#888',
+  legendContainer: {
+    width: '100%',
   },
-  categoriesList: {
-    marginTop: 8,
-  },
-  categoryItem: {
+  barLegendContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 10,
+    justifyContent: 'center',
+    marginTop: 16,
+    width: '100%',
   },
-  categoryLeft: {
+  legendItem: {
     flexDirection: 'row',
     alignItems: 'center',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+    marginHorizontal: 12,
   },
-  categoryDot: {
+  legendDot: {
     width: 12,
     height: 12,
     borderRadius: 6,
+    marginRight: 8,
+  },
+  legendText: {
+    fontSize: 14,
+  },
+  legendAmount: {
+    fontSize: 14,
+    fontWeight: '500',
     marginRight: 12,
   },
-  categoryName: {
-    fontSize: 15,
-  },
-  categoryAmount: {
-    fontSize: 15,
-    fontWeight: '500',
+  legendPercent: {
+    fontSize: 14,
+    color: '#666',
   },
 });
 
