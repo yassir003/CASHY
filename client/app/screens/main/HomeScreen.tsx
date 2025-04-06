@@ -84,40 +84,61 @@ export default function HomeScreen() {
   // Add categories context to match TransactionsScreen
   const { categories, fetchCategories } = useCategories();
 
+  // Calculate month spending and balance
+  const calculateMonthSpending = (transactionsList: Transaction[]) => {
+    // If there are no transactions or there's an error, set spending to 0
+    if (transactionsList.length === 0 || error) {
+      setMonthSpending(0);
+      const budgetAmount = budget?.amount || 0;
+      setBalance(budgetAmount);
+      return;
+    }
+
+    // Calculate month spending from transactions with type "expense"
+    const totalExpenses = transactionsList
+      .filter(tx => tx.type === "expense")
+      .reduce((sum, tx) => sum + parseFloat(tx.amount), 0);
+    
+    setMonthSpending(totalExpenses);
+    
+    // Calculate balance as total budget - month spending
+    const budgetAmount = budget?.amount || 0;
+    setBalance(budgetAmount - totalExpenses);
+  };
+
   useEffect(() => {
     // Check budget when component mounts
     checkBudget();
-
     fetchCategories();
-    
+  }, []);
+  
+  useEffect(() => {
     // Fetch all transactions and then filter for the most recent 5
     const loadTransactions = async () => {
       await fetchTransactions();
-      if (transactions.length > 0) {
-        // Sort transactions by date (newest first) and take the first 5
-        const sortedTransactions = [...transactions].sort((a, b) => {
-          const dateA = a.date ? new Date(a.date).getTime() : 0;
-          const dateB = b.date ? new Date(b.date).getTime() : 0;
-          return dateB - dateA;
-        });
-        
-        setRecentTransactions(sortedTransactions.slice(0, 5));
-        
-        // Calculate month spending from transactions with type "expense"
-        const totalExpenses = transactions
-          .filter(tx => tx.type === "expense")
-          .reduce((sum, tx) => sum + parseFloat(tx.amount), 0);
-        
-        setMonthSpending(totalExpenses);
-        
-        // Calculate balance as total budget - month spending
-        const budgetAmount = budget?.amount || 0;
-        setBalance(budgetAmount - totalExpenses);
-      }
     };
     
     loadTransactions();
-  }, [transactions.length, budget?.amount]);
+  }, []);
+  
+  // Effect to update recent transactions and recalculate spending when transactions change
+  useEffect(() => {
+    if (transactions.length > 0) {
+      // Sort transactions by date (newest first) and take the first 5
+      const sortedTransactions = [...transactions].sort((a, b) => {
+        const dateA = a.date ? new Date(a.date).getTime() : 0;
+        const dateB = b.date ? new Date(b.date).getTime() : 0;
+        return dateB - dateA;
+      });
+      
+      setRecentTransactions(sortedTransactions.slice(0, 5));
+    } else {
+      setRecentTransactions([]);
+    }
+    
+    // Always recalculate spending when transactions change
+    calculateMonthSpending(transactions);
+  }, [transactions, budget?.amount]);
 
   const handleAddTransaction = () => setIsModalOpen(true);
 
@@ -204,7 +225,7 @@ export default function HomeScreen() {
           {loading ? (
             <Text style={styles.loadingText}>Loading transactions...</Text>
           ) : error ? (
-            <Text style={styles.errorText}>{error}</Text>
+            <Text style={styles.errorText}>No Transactions found for this month</Text>
           ) : recentTransactions.length === 0 ? (
             <Text style={styles.emptyText}>No recent transactions</Text>
           ) : (
@@ -267,7 +288,7 @@ export default function HomeScreen() {
 
       {/* Floating Action Button */}
       <TouchableOpacity style={styles.fab} onPress={handleAddTransaction}>
-        <Plus size={24} color="#fff" />
+        <Plus size={28} color="#fff" />
       </TouchableOpacity>
 
       <TransactionModal

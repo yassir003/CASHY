@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, ReactNode } from 'react';
-import api from '@/lib/api'; // Assuming you have an axios instance for API calls
+import api from '@/lib/api';
 
 // Define the Transaction type with category details
 export interface Transaction {
@@ -25,6 +25,7 @@ interface TransactionContextType {
   addTransaction: (transaction: Omit<Transaction, 'id'>) => Promise<void>;
   updateTransaction: (id: string, transaction: Partial<Transaction>) => Promise<void>;
   deleteTransaction: (id: string) => Promise<void>;
+  deleteTransactionsByCategory: (categoryId: string) => Promise<void>;
 }
 
 // Create the context
@@ -141,6 +142,21 @@ const updateTransaction = async (id: string, transaction: Partial<Transaction>) 
     }
   };
 
+  const deleteTransactionsByCategory = async (categoryId: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      await api.delete(`/expenses/category/${categoryId}`);
+      // Filter out deleted transactions from local state
+      setTransactions(prev => prev.filter(t => t.category !== categoryId));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete category transactions');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Context value
   const contextValue: TransactionContextType = {
     transactions,
@@ -150,7 +166,8 @@ const updateTransaction = async (id: string, transaction: Partial<Transaction>) 
     fetchfiveTransactions,
     addTransaction,
     updateTransaction,
-    deleteTransaction
+    deleteTransaction,
+    deleteTransactionsByCategory
   };
 
   return (

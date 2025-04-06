@@ -123,3 +123,28 @@ export const getThisMonthExpenses = async (req, res) => {
         res.status(400).json({ error: error.message });
     }
 };
+
+// Delete expenses by categoryId
+export const deleteExpensesByCategory = async (req, res) => {
+    try {
+        const { categoryId } = req.params;
+        const userId = req.user.userId;
+
+        const result = await Expense.deleteMany({ 
+            userId: userId,
+            categoryId: categoryId 
+        });
+
+        if (result.deletedCount === 0) {
+            return res.status(404).json({ 
+                message: "No expenses found for this category" 
+            });
+        }
+
+        res.json({ 
+            message: `Successfully deleted ${result.deletedCount} expenses` 
+        });
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+};

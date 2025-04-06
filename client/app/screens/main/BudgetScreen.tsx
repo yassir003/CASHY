@@ -3,6 +3,7 @@ import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Pressable } from 
 import { Home, Utensils, Car, Film, Music, ShoppingBag, Briefcase, Plane, Heart, Smartphone, Plus, Pencil, Trash2 } from 'lucide-react-native';
 import AddEditCategoryDialog from '@/components/AddEditCategoryDialog';
 import EditTotalBudgetDialog from '@/components/EditTotalBudgetDialog';
+import DeleteConfirmationDialog from '@/components/DeleteConfirmationDialog';
 import { useBudget } from '@/contexts/BudgetContext';
 import { Category, useCategories } from '@/contexts/CategoriesContext';
 import { useTransactions } from '@/contexts/TransactionContext';
@@ -16,10 +17,12 @@ interface CategoryWithSpent extends Omit<Category, 'spent'> {
 const BudgetScreen = () => {
   const { budget: contextBudget, checkBudget, setBudget } = useBudget();
   const { categories, addCategory, updateCategory, deleteCategory, fetchCategories } = useCategories();
-  const { transactions, fetchTransactions } = useTransactions();
+  const { transactions, fetchTransactions, deleteTransactionsByCategory } = useTransactions();
   
   const [isDialogVisible, setIsDialogVisible] = useState(false);
   const [isBudgetDialogVisible, setIsBudgetDialogVisible] = useState(false);
+  const [isDeleteDialogVisible, setIsDeleteDialogVisible] = useState(false);
+  const [categoryToDelete, setCategoryToDelete] = useState<CategoryWithSpent | null>(null);
   const [editingCategory, setEditingCategory] = useState<Partial<CategoryWithSpent> | null>(null);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [categoriesWithSpent, setCategoriesWithSpent] = useState<CategoryWithSpent[]>([]);
@@ -118,13 +121,30 @@ const BudgetScreen = () => {
     }
   };
 
-  // Delete category
-  const handleDelete = async (id: string) => {
-    try {
-      await deleteCategory(id);
-      await fetchCategories();
-    } catch (error) {
-      console.error('Error deleting category:', error);
+  // Open delete confirmation dialog
+  const handleOpenDeleteDialog = (category: CategoryWithSpent) => {
+    setCategoryToDelete(category);
+    setIsDeleteDialogVisible(true);
+  };
+
+  // Handle actual deletion
+  const handleConfirmDelete = async () => {
+    if (categoryToDelete && categoryToDelete._id) {
+      try {
+        // First delete all associated transactions
+        await deleteTransactionsByCategory(categoryToDelete._id);
+        // Then delete the category itself
+        await deleteCategory(categoryToDelete._id);
+        // Refresh both categories and transactions
+        await fetchCategories();
+        await fetchTransactions();
+      } catch (error) {
+        console.error('Error during deletion:', error);
+      } finally {
+        // Close dialog and clear category to delete
+        setIsDeleteDialogVisible(false);
+        setCategoryToDelete(null);
+      }
     }
   };
 
@@ -198,7 +218,7 @@ const BudgetScreen = () => {
                   <Pressable onPress={() => handleOpenDialog(category)}>
                     <Pencil color="#64748b" size={18} />
                   </Pressable>
-                  <Pressable onPress={() => handleDelete(category._id)}>
+                  <Pressable onPress={() => handleOpenDeleteDialog(category)}>
                     <Trash2 color="#ef4444" size={18} />
                   </Pressable>
                 </View>
@@ -240,6 +260,18 @@ const BudgetScreen = () => {
         totalBudget={contextBudget?.amount || totalBudget}
         onSubmit={handleUpdateTotalBudget}
       />
+
+      {categoryToDelete && (
+        <DeleteConfirmationDialog 
+          visible={isDeleteDialogVisible}
+          onDismiss={() => {
+            setIsDeleteDialogVisible(false);
+            setCategoryToDelete(null);
+          }}
+          onConfirm={handleConfirmDelete}
+          categoryName={categoryToDelete.name}
+        />
+      )}
     </View>
   );
 };

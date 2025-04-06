@@ -176,11 +176,11 @@ export default function App() {
   return (
     <AuthProvider>
       <BudgetProvider>
-        <CategoryProvider>
-          <TransactionProvider>
+        <TransactionProvider>
+          <CategoryProvider>
             <AppNavigator />
-          </TransactionProvider>
-        </CategoryProvider>
+          </CategoryProvider>
+        </TransactionProvider>
       </BudgetProvider>
     </AuthProvider>
   );

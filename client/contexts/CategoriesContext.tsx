@@ -86,7 +86,7 @@ export const CategoryProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   };
 
-  const deleteCategory = async (id: string) => {
+  const deleteCategory = async (id: string): Promise<void> => { 
     try {
       await api.delete(`/categories/${id}`);
       setCategories(prev => prev.filter(cat => cat._id !== id));

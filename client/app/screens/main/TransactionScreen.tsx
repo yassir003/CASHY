@@ -1,80 +1,56 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
-  ScrollView,
+  SectionList,
   TouchableOpacity,
   StyleSheet,
-  SectionList,
+  ActivityIndicator,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
 import { TransactionModal } from "@/components/transaction-modal";
+import { Transaction, useTransactions } from "@/contexts/TransactionContext";
+import { useCategories } from "@/contexts/CategoriesContext";
+import {
+  Home,
+  Utensils,
+  Car,
+  Film,
+  Music,
+  ShoppingBag,
+  Briefcase,
+  Plane,
+  Heart,
+  Smartphone,
+  Plus,
+  Pencil,
+  Trash2,
+  AlertCircle,
+} from "lucide-react-native";
 
-type Transaction = {
-  id: string;
-  name: string;
-  date: string;
-  amount: string;
-  type: "credit" | "debit";
-  category: string;
+const icons = {
+  Home,
+  Utensils,
+  Car,
+  Film,
+  Music,
+  ShoppingBag,
+  Briefcase,
+  Plane,
+  Heart,
+  Smartphone,
+  Plus,
+  Pencil,
+  Trash2,
+  AlertCircle,
 };
 
-// Updated mock data with proper dates
-const initialTransactions: Transaction[] = [
-  {
-    id: "t1",
-    name: "Salary Deposit",
-    date: "2024-03-15",
-    amount: "5000.00",
-    type: "credit",
-    category: "income",
-  },
-  {
-    id: "t2",
-    name: "Amazon Purchase",
-    date: "2024-03-15",
-    amount: "129.99",
-    type: "debit",
-    category: "shopping",
-  },
-  {
-    id: "t3",
-    name: "Netflix Subscription",
-    date: "2024-03-14",
-    amount: "14.99",
-    type: "debit",
-    category: "entertainment",
-  },
-  {
-    id: "t4",
-    name: "Freelance Payment",
-    date: "2024-03-14",
-    amount: "750.00",
-    type: "credit",
-    category: "income",
-  },
-];
-
-const getCategoryIcon = (category: string): { name: keyof typeof Ionicons.glyphMap; color: string } => {
-  switch (category) {
-    case "shopping":
-      return { name: "cart", color: "#f59e0b" };
-    case "food":
-      return { name: "restaurant", color: "#10b981" };
-    case "income":
-      return { name: "wallet", color: "#3b82f6" };
-    case "entertainment":
-      return { name: "film", color: "#8b5cf6" };
-    default:
-      return { name: "id-card", color: "#6b7280" };
-  }
-};
+// Define an IconType to match the icons object
+type IconType = keyof typeof icons;
 
 const groupTransactionsByDate = (transactions: Transaction[]) => {
   const grouped: { [key: string]: Transaction[] } = {};
   
   transactions.forEach((transaction) => {
-    // Add null check and fallback
     const transactionDate = transaction.date ? new Date(transaction.date) : new Date();
     const date = transactionDate.toLocaleDateString("en-US", {
       weekday: "long",
@@ -89,74 +65,178 @@ const groupTransactionsByDate = (transactions: Transaction[]) => {
     grouped[date].push(transaction);
   });
 
-  return Object.entries(grouped).map(([title, data]) => ({ title, data }));
+  return Object.entries(grouped)
+    .map(([title, data]) => ({ title, data }))
+    .sort((a, b) => new Date(b.title).getTime() - new Date(a.title).getTime());
 };
 
-export default function TransactionsPage() {
-  const [transactions, setTransactions] = useState<Transaction[]>(initialTransactions);
+const TransactionsScreen = () => {
+  const { 
+    transactions, 
+    loading, 
+    error, 
+    fetchTransactions, 
+    addTransaction,
+    updateTransaction,
+    deleteTransaction 
+  } = useTransactions();
+
+  const { categories } = useCategories();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentTransaction, setCurrentTransaction] = useState<Transaction | undefined>();
   const [isEditing, setIsEditing] = useState(false);
 
-  const handleSaveTransaction = (transaction: Transaction) => {
-    if (isEditing) {
-      setTransactions(transactions.map((t) => (t.id === transaction.id ? transaction : t)));
+  useEffect(() => {
+    fetchTransactions();
+  }, []);
+
+  const handleSaveTransaction = async (transaction: Transaction) => {
+    if (isEditing && currentTransaction) {
+      await updateTransaction(currentTransaction.id, transaction);
     } else {
-      setTransactions([{ ...transaction, id: `t${Date.now()}` }, ...transactions]);
+      await addTransaction(transaction);
     }
     setIsModalOpen(false);
   };
 
-  const handleDelete = (id: string) => {
-    setTransactions(transactions.filter((t) => t.id !== id));
+  const handleDelete = async (id: string) => {
+    await deleteTransaction(id);
   };
 
-  const renderTransactionItem = ({ item }: { item: Transaction }) => (
-    <View style={styles.transactionItem}>
-      <View style={styles.transactionLeft}>
-        <View style={[styles.categoryIcon, { backgroundColor: getCategoryIcon(item.category).color + "20" }]}>
-          <Ionicons
-            name={getCategoryIcon(item.category).name}
-            size={20}
-            color={getCategoryIcon(item.category).color}
-          />
-        </View>
-        <View style={styles.transactionInfo}>
-          <Text style={styles.transactionName}>{item.name}</Text>
-          <Text style={styles.transactionCategory}>{item.category}</Text>
-        </View>
-      </View>
-      <View style={styles.transactionRight}>
-        <Text style={[styles.amount, item.type === "credit" ? styles.credit : styles.debit]}>
-          {item.type === "credit" ? "+" : "-"}${item.amount}
-        </Text>
-        <View style={styles.actions}>
-          <TouchableOpacity onPress={() => { setCurrentTransaction(item); setIsEditing(true); setIsModalOpen(true); }}>
-            <Ionicons name="pencil" size={18} color="#6b7280" style={styles.actionIcon} />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => handleDelete(item.id)}>
-            <Ionicons name="trash" size={18} color="#ef4444" style={styles.actionIcon} />
-          </TouchableOpacity>
-        </View>
-      </View>
-    </View>
-  );
+  const getCategoryIcon = (iconName: string, color: string) => {
+    const iconProps = { size: 20, color: color };
+    const IconComponent = (icons[iconName as IconType] || icons.Home);
+    return <IconComponent {...iconProps} />;
+  };
 
-  return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        {/* <Text style={styles.headerTitle}>Transactions</Text> */}
+  const renderTransactionItem = ({ item }: { item: Transaction }) => {
+    // Use embedded category data if available, otherwise fall back to finding it in categories array
+    const category = categories.find(cat => cat._id === item.category);
+    const categoryName = item.categoryName || category?.name || "Uncategorized";
+    const categoryColor = item.categoryColor || category?.color || "#6b7280";
+    const categoryIcon = item.categoryIcon || category?.icon || "Home";
+    
+    // Format amount with 2 decimal places
+    const formattedAmount = parseFloat(item.amount).toFixed(2);
+    
+    return (
+      <View style={styles.transactionItem}>
+        <View style={styles.transactionLeft}>
+          <View style={[styles.categoryIcon, { 
+            backgroundColor: categoryColor + "20" 
+          }]}>
+            {getCategoryIcon(categoryIcon, categoryColor)}
+          </View>
+          <View style={styles.transactionInfo}>
+            <Text style={styles.transactionName}>{item.name}</Text>
+            <Text style={styles.transactionCategory}>
+              {categoryName}
+            </Text>
+          </View>
+        </View>
+        <View style={styles.transactionRight}>
+          <Text style={[styles.amount, item.type === "income" ? styles.credit : styles.debit]}>
+            {item.type === "income" ? "+" : "-"}${formattedAmount}
+          </Text>
+          <View style={styles.actions}>
+            <TouchableOpacity onPress={() => { 
+              setCurrentTransaction(item); 
+              setIsEditing(true); 
+              setIsModalOpen(true); 
+            }}>
+              <Pencil size={18} color="#6b7280" />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => handleDelete(item.id)}>
+              <Trash2 size={18} color="#ef4444" />
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    );
+  };
+
+  const calculateTotal = (type: 'income' | 'expense') => {
+    return transactions
+      .filter(t => t.type === type)
+      .reduce((sum, t) => sum + parseFloat(t.amount), 0)
+      .toFixed(2);
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#3b82f6" />
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.errorContainer}>
+        <View style={styles.warningContainer}>
+          <AlertCircle size={20} color="#f59e0b" />
+          <Text style={styles.warningText}>
+            Transactions will be renewed at the start of each month
+          </Text>
+        </View>
         <View style={styles.balanceContainer}>
           <View style={styles.balanceItem}>
             <Text style={styles.balanceLabel}>Income</Text>
             <Text style={[styles.balanceValue, styles.credit]}>
-              ${transactions.filter(t => t.type === "credit").reduce((sum, t) => sum + parseFloat(t.amount), 0).toFixed(2)}
+              ${(0).toFixed(2)}
             </Text>
           </View>
           <View style={styles.balanceItem}>
             <Text style={styles.balanceLabel}>Expenses</Text>
             <Text style={[styles.balanceValue, styles.debit]}>
-              ${transactions.filter(t => t.type === "debit").reduce((sum, t) => sum + parseFloat(t.amount), 0).toFixed(2)}
+              ${(0).toFixed(2)}
+            </Text>
+          </View>
+        </View>
+        <Text style={styles.errorText}>No Transactions found for this month</Text>
+        
+        <TouchableOpacity 
+          style={styles.fab} 
+          onPress={() => { 
+            setIsModalOpen(true); 
+            setIsEditing(false); 
+            setCurrentTransaction(undefined);
+          }}
+        >
+          <Plus size={28} color="white" />
+        </TouchableOpacity>
+        
+        <TransactionModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          onSave={handleSaveTransaction}
+          transaction={currentTransaction}
+          isEditing={isEditing}
+        />
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <View style={styles.warningContainer}>
+          <AlertCircle size={20} color="#f59e0b" />
+          <Text style={styles.warningText}>
+            Transactions will be renewed at the start of each month
+          </Text>
+        </View>
+        <View style={styles.balanceContainer}>
+          <View style={styles.balanceItem}>
+            <Text style={styles.balanceLabel}>Income</Text>
+            <Text style={[styles.balanceValue, styles.credit]}>
+              ${calculateTotal('income')}
+            </Text>
+          </View>
+          <View style={styles.balanceItem}>
+            <Text style={styles.balanceLabel}>Expenses</Text>
+            <Text style={[styles.balanceValue, styles.debit]}>
+              ${calculateTotal('expense')}
             </Text>
           </View>
         </View>
@@ -170,11 +250,23 @@ export default function TransactionsPage() {
           <Text style={styles.sectionHeader}>{title}</Text>
         )}
         contentContainerStyle={styles.listContent}
-        stickySectionHeadersEnabled={false}
+        ListEmptyComponent={
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>No transactions yet</Text>
+            <Text style={styles.emptySubtext}>Add a transaction to get started</Text>
+          </View>
+        }
       />
 
-      <TouchableOpacity style={styles.fab} onPress={() => { setIsModalOpen(true); setIsEditing(false); }}>
-        <Ionicons name="add" size={28} color="white" />
+      <TouchableOpacity 
+        style={styles.fab} 
+        onPress={() => { 
+          setIsModalOpen(true); 
+          setIsEditing(false); 
+          setCurrentTransaction(undefined);
+        }}
+      >
+        <Plus size={28} color="white" />
       </TouchableOpacity>
 
       <TransactionModal
@@ -199,11 +291,21 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#e2e8f0",
   },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: "700",
-    color: "#1e293b",
+  warningContainer: {
+    backgroundColor: "#fef3c7",
+    borderWidth: 1,
+    borderColor: "#f59e0b",
+    borderRadius: 8,
+    padding: 12,
     marginBottom: 16,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  warningText: {
+    marginLeft: 8,
+    color: "#92400e",
+    fontSize: 14,
+    flex: 1,
   },
   balanceContainer: {
     flexDirection: "row",
@@ -292,9 +394,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 12,
   },
-  actionIcon: {
-    padding: 4,
-  },
   fab: {
     position: "absolute",
     bottom: 32,
@@ -311,4 +410,39 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 4,
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f8fafc',
+  },
+  errorContainer: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: '#f8fafc',
+  },
+  errorText: {
+    color: '#dc2626',
+    fontSize: 18,
+    marginTop: 16,
+    textAlign: 'center',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 100,
+  },
+  emptyText: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#1e293b',
+    marginBottom: 8,
+  },
+  emptySubtext: {
+    fontSize: 16,
+    color: '#64748b',
+  },
 });
+
+export default TransactionsScreen;
