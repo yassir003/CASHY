@@ -18,6 +18,8 @@ type AuthContextType = {
   register: (username: string, email: string, password: string) => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  updateProfile: (userData: Partial<User>) => Promise<void>;
+  changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
   clearError: () => void;
 };
 
@@ -133,13 +135,72 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  //update user profile
+  const updateProfile = async (userData: Partial<User>) => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      if (!token) {
+        throw new Error('Authentication required');
+      }
+      
+      const response = await api.put('/users/profile', userData, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      
+      // Update the user state with the returned updated user data
+      const updatedUser = response.data;
+      setUser(prevUser => prevUser ? { ...prevUser, ...updatedUser } : updatedUser);
+      
+      // Update stored user data
+      if (user) {
+        storeAuthData(token, { ...user, ...updatedUser });
+      }
+      
+    } catch (err) {
+      handleAuthError(err, 'Profile update');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  //change password
+  const changePassword = async (currentPassword: string, newPassword: string) => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      if (!token) {
+        throw new Error('Authentication required');
+      }
+      
+      await api.put('/users/change-password', 
+        { currentPassword, newPassword },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+      
+      
+    } catch (err) {
+      handleAuthError(err, 'Password change');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const clearError = () => {
     setError(null);
   };
 
   const handleAuthError = (err: unknown, context: string) => {
     if (axios.isAxiosError(err) && err.response) {
-      setError(err.response.data.message || `${context} failed`);
+      setError(err.response.data.message || err.response.data.error || `${context} failed`);
     } else {
       setError(`An unexpected error occurred during ${context.toLowerCase()}`);
     }
@@ -156,6 +217,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         register,
         login,
         logout,
+        updateProfile,
+        changePassword,
         clearError,
       }}
     >

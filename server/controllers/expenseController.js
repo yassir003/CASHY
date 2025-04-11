@@ -148,3 +148,20 @@ export const deleteExpensesByCategory = async (req, res) => {
         res.status(400).json({ error: error.message });
     }
 };
+
+// Get count of expenses by categoryId
+export const getExpenseCountByCategory = async (req, res) => {
+    try {
+        const { categoryId } = req.params;
+        const userId = req.user.userId;
+
+        const count = await Expense.countDocuments({ 
+            userId: userId,
+            categoryId: categoryId 
+        });
+
+        res.json({ count });
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+};

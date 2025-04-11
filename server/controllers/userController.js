@@ -49,7 +49,7 @@ export const login = async (req, res) => {
         const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: "1h" });
         
         // Custom user data with only username
-        const userData = { username: user.username , id: user._id };
+        const userData = { username: user.username , id: user._id, email: user.email };
 
         res.json({ 
             token,
@@ -75,6 +75,35 @@ export const updateProfile = async (req, res) => {
     try {
         const updatedUser = await User.findByIdAndUpdate(req.user.userId, req.body, { new: true });
         res.json(updatedUser);
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+};
+
+// Change user password
+export const changePassword = async (req, res) => {
+    const { currentPassword, newPassword } = req.body;
+
+    try {
+        if (!currentPassword || !newPassword) {
+            return res.status(400).json({ error: "Current password and new password are required" });
+        }
+
+        const user = await User.findById(req.user.userId);
+        if (!user) {
+            return res.status(404).json({ error: "User not found" });
+        }
+
+        const isMatch = await bcrypt.compare(currentPassword, user.password);
+        if (!isMatch) {
+            return res.status(400).json({ error: "Current password is incorrect" });
+        }
+
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        user.password = hashedPassword;
+        await user.save();
+
+        res.status(200).json({ message: "Password updated successfully" });
     } catch (error) {
         res.status(400).json({ error: error.message });
     }

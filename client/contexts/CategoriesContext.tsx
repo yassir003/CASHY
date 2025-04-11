@@ -86,9 +86,21 @@ export const CategoryProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   };
 
-  const deleteCategory = async (id: string): Promise<void> => { 
+  const deleteCategory = async (id: string): Promise<void> => {
     try {
+      // First check if category has any transactions
+      const transactionsResponse = await api.get(`/expenses/category/${id}/count`);
+      const hasTransactions = transactionsResponse.data.count > 0;
+      
+      if (hasTransactions) {
+        // If there are transactions, delete them first
+        await api.delete(`/expenses/category/${id}`);
+      }
+      
+      // Then delete the category
       await api.delete(`/categories/${id}`);
+      
+      // Update local state
       setCategories(prev => prev.filter(cat => cat._id !== id));
     } catch (err) {
       setError('Failed to delete category');

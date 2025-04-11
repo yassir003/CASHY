@@ -27,9 +27,9 @@ const DeleteConfirmationDialog: React.FC<DeleteConfirmationDialogProps> = ({
         <View style={styles.modalContent}>
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>Delete Category</Text>
-            <TouchableOpacity onPress={onDismiss} style={styles.closeButton}>
+            {/* <TouchableOpacity onPress={onDismiss} style={styles.closeButton}>
               <AntDesign name="close" size={24} color="#000" />
-            </TouchableOpacity>
+            </TouchableOpacity> */}
           </View>
           
           <View style={styles.warningContainer}>

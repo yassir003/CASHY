@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Modal, View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 
 interface BudgetModalProps {
@@ -10,16 +10,41 @@ interface BudgetModalProps {
 export const BudgetModal: React.FC<BudgetModalProps> = ({ visible, onClose, onSubmit }) => {
   const [amount, setAmount] = useState('');
   const [error, setError] = useState('');
+  const [inputError, setInputError] = useState(false);
+
+  // Reset state when modal becomes visible
+  useEffect(() => {
+    if (visible) {
+      setAmount('');
+      setError('');
+      setInputError(false);
+    }
+  }, [visible]);
+
+  // Clear input error when amount changes
+  useEffect(() => {
+    if (amount) {
+      setInputError(false);
+    }
+  }, [amount]);
 
   const handleSubmit = async () => {
     try {
+      // Check if amount is empty
+      if (!amount.trim()) {
+        setInputError(true);
+        throw new Error('Please enter an amount');
+      }
+
       const numericAmount = parseFloat(amount);
       
       if (isNaN(numericAmount)) {
+        setInputError(true);
         throw new Error('Please enter a valid number');
       }
       
       if (numericAmount <= 0) {
+        setInputError(true);
         throw new Error('Budget must be greater than zero');
       }
       
@@ -28,6 +53,7 @@ export const BudgetModal: React.FC<BudgetModalProps> = ({ visible, onClose, onSu
       // Reset input and close modal on successful submission
       setAmount('');
       setError('');
+      setInputError(false);
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create budget');
@@ -45,7 +71,10 @@ export const BudgetModal: React.FC<BudgetModalProps> = ({ visible, onClose, onSu
           )}
           
           <TextInput 
-            style={styles.input} 
+            style={[
+              styles.input, 
+              inputError ? styles.inputError : null
+            ]} 
             placeholder="Enter amount" 
             keyboardType="numeric" 
             value={amount} 
@@ -61,7 +90,11 @@ export const BudgetModal: React.FC<BudgetModalProps> = ({ visible, onClose, onSu
             </TouchableOpacity> */}
             
             <TouchableOpacity 
-              style={[styles.button, styles.submitButton]} 
+              style={[
+                styles.button, 
+                styles.submitButton,
+                (!amount.trim() || parseFloat(amount) <= 0) ? styles.disabledButton : null
+              ]} 
               onPress={handleSubmit}
             >
               <Text style={styles.buttonText}>Create</Text>
@@ -97,6 +130,10 @@ const styles = StyleSheet.create({
     padding: 12,
     marginBottom: 16,
   },
+  inputError: {
+    borderColor: '#dc2626',
+    backgroundColor: 'rgba(254, 226, 226, 0.2)',
+  },
   buttonContainer: {
     flexDirection: 'row',
     gap: 12,
@@ -115,6 +152,10 @@ const styles = StyleSheet.create({
   },
   submitButton: {
     backgroundColor: '#3b82f6',
+  },
+  disabledButton: {
+    backgroundColor: '#93c5fd',
+    opacity: 0.7,
   },
   buttonText: {
     color: 'white',

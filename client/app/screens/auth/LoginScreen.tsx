@@ -1,5 +1,3 @@
-"use client"
-
 import { useState, useEffect } from "react"
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from "react-native"
 import { Eye, EyeOff, Mail, Lock } from "lucide-react-native"
@@ -13,6 +11,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
+  const [errorType, setErrorType] = useState<null | "invalidCredentials" | "userNotFound">(null)
   
   // Use the auth context
   const { login, isLoading, error, clearError, user } = useAuth();
@@ -24,13 +23,29 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
     }
   }, [user, onLoginSuccess]);
   
-  // Display error messages
+  // Display error messages and handle specific error types
   useEffect(() => {
     if (error) {
+      if (error.includes("Invalid credentials") || error.includes("400")) {
+        setErrorType("invalidCredentials");
+      } else if (error.includes("User not found") || error.includes("404")) {
+        setErrorType("userNotFound");
+      }
       Alert.alert("Error", error);
       clearError();
     }
   }, [error, clearError]);
+
+  // Reset error state when inputs change
+  const handleEmailChange = (text: string) => {
+    setEmail(text);
+    if (errorType) setErrorType(null);
+  };
+
+  const handlePasswordChange = (text: string) => {
+    setPassword(text);
+    if (errorType) setErrorType(null);
+  };
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -46,41 +61,74 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
     }
   };
 
+  const hasError = errorType !== null;
+
   return (
     <View style={styles.container}>
       <View style={styles.formGroup}>
         <Text style={styles.label}>Email</Text>
-        <View style={styles.inputContainer}>
-          <Mail size={20} color="#64748b" style={styles.inputIcon} />
+        <View style={[
+          styles.inputContainer, 
+          hasError && styles.inputContainerError
+        ]}>
+          <Mail 
+            size={20} 
+            color={hasError ? "#ef4444" : "#64748b"} 
+            style={styles.inputIcon} 
+          />
           <TextInput
-            style={styles.input}
+            style={[
+              styles.input, 
+              hasError && styles.inputError
+            ]}
             placeholder="Enter your email"
+            placeholderTextColor={hasError ? "#fca5a5" : "#94a3b8"}
             value={email}
-            onChangeText={setEmail}
+            onChangeText={handleEmailChange}
             keyboardType="email-address"
             autoCapitalize="none"
             editable={!isLoading}
           />
         </View>
+        {errorType === "userNotFound" && (
+          <Text style={styles.errorText}>User not found</Text>
+        )}
       </View>
 
       <View style={styles.formGroup}>
         <Text style={styles.label}>Password</Text>
-        <View style={styles.inputContainer}>
-          <Lock size={20} color="#64748b" style={styles.inputIcon} />
+        <View style={[
+          styles.inputContainer, 
+          hasError && styles.inputContainerError
+        ]}>
+          <Lock 
+            size={20} 
+            color={hasError ? "#ef4444" : "#64748b"} 
+            style={styles.inputIcon} 
+          />
           <TextInput
-            style={styles.input}
+            style={[
+              styles.input, 
+              hasError && styles.inputError
+            ]}
             placeholder="Enter your password"
+            placeholderTextColor={hasError ? "#fca5a5" : "#94a3b8"}
             value={password}
-            onChangeText={setPassword}
+            onChangeText={handlePasswordChange}
             secureTextEntry={!showPassword}
             autoCapitalize="none"
             editable={!isLoading}
           />
           <TouchableOpacity style={styles.eyeIcon} onPress={() => setShowPassword(!showPassword)}>
-            {showPassword ? <EyeOff size={20} color="#64748b" /> : <Eye size={20} color="#64748b" />}
+            {showPassword ? 
+              <EyeOff size={20} color={hasError ? "#ef4444" : "#64748b"} /> : 
+              <Eye size={20} color={hasError ? "#ef4444" : "#64748b"} />
+            }
           </TouchableOpacity>
         </View>
+        {errorType === "invalidCredentials" && (
+          <Text style={styles.errorText}>Invalid email or password</Text>
+        )}
       </View>
 
       <TouchableOpacity style={styles.forgotPassword}>
@@ -125,6 +173,10 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: "#fff",
   },
+  inputContainerError: {
+    borderColor: "#ef4444", // Red 500
+    backgroundColor: "#fef2f2", // Red 50
+  },
   inputIcon: {
     marginLeft: 12,
   },
@@ -134,6 +186,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     fontSize: 16,
     color: "#334155", // Slate 700
+  },
+  inputError: {
+    color: "#b91c1c", // Red 700
+  },
+  errorText: {
+    color: "#ef4444", // Red 500
+    fontSize: 14,
+    marginTop: 4,
   },
   eyeIcon: {
     padding: 12,

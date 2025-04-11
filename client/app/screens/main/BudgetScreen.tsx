@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Pressable } from 'react-native';
-import { Home, Utensils, Car, Film, Music, ShoppingBag, Briefcase, Plane, Heart, Smartphone, Plus, Pencil, Trash2 } from 'lucide-react-native';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Pressable, Alert } from 'react-native';
+import { Home, Utensils, Car, Film, Music, ShoppingBag, Briefcase, Plane, Heart, Smartphone, Plus, Pencil, Trash2, AlertTriangle } from 'lucide-react-native';
 import AddEditCategoryDialog from '@/components/AddEditCategoryDialog';
 import EditTotalBudgetDialog from '@/components/EditTotalBudgetDialog';
 import DeleteConfirmationDialog from '@/components/DeleteConfirmationDialog';
@@ -17,7 +17,7 @@ interface CategoryWithSpent extends Omit<Category, 'spent'> {
 const BudgetScreen = () => {
   const { budget: contextBudget, checkBudget, setBudget } = useBudget();
   const { categories, addCategory, updateCategory, deleteCategory, fetchCategories } = useCategories();
-  const { transactions, fetchTransactions, deleteTransactionsByCategory } = useTransactions();
+  const { transactions, fetchTransactions } = useTransactions();
   
   const [isDialogVisible, setIsDialogVisible] = useState(false);
   const [isBudgetDialogVisible, setIsBudgetDialogVisible] = useState(false);
@@ -27,9 +27,13 @@ const BudgetScreen = () => {
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [categoriesWithSpent, setCategoriesWithSpent] = useState<CategoryWithSpent[]>([]);
 
-  // Calculate total budget and spent
-  const totalBudget = contextBudget?.amount || categoriesWithSpent.reduce((sum, category) => sum + (category.budget || 0), 0);
+  // Calculate total budget, sum of category budgets, and spent
+  const totalBudget = contextBudget?.amount || 0;
+  const sumOfCategoryBudgets = categoriesWithSpent.reduce((sum, category) => sum + (category.budget || 0), 0);
   const totalSpent = categoriesWithSpent.reduce((sum, category) => sum + (category.spent || 0), 0);
+  
+  // Check if there's a budget inconsistency
+  const hasBudgetInconsistency = totalBudget > 0 && sumOfCategoryBudgets > totalBudget;
 
   // Load initial data
   useEffect(() => {
@@ -106,9 +110,34 @@ const BudgetScreen = () => {
     setIsDialogVisible(true);
   };
 
+  // calculate available budget
+  const calculateAvailableBudget = (excludeCategoryId?: string): number => {
+    const totalBudgetAmount = contextBudget?.amount || 0;
+    const allocatedBudget = categoriesWithSpent
+      .filter(cat => cat._id !== excludeCategoryId) // Exclude the category being edited
+      .reduce((sum, cat) => sum + (cat.budget || 0), 0);
+    
+    return totalBudgetAmount - allocatedBudget;
+  };
+
   // Submit category (add or update)
   const handleCategorySubmit = async (categoryData: Omit<Category, '_id' | 'userId' | 'spent'>) => {
     try {
+      const newBudgetAmount = categoryData.budget || 0;
+      const availableBudget = calculateAvailableBudget(editingCategory?._id);
+      
+      // Check if the new budget would exceed the total
+      if (newBudgetAmount > availableBudget) {
+        // Display an error or alert
+        Alert.alert(
+          "Budget Limit Exceeded",
+          `The budget amount exceeds the available budget of $${availableBudget.toLocaleString()}. Please adjust the amount or increase the total budget.`,
+          [{ text: "OK" }]
+        );
+        return; // Stop the submission
+      }
+      
+      // Continue with the original logic if validation passes
       if (editingCategory && editingCategory._id) {
         await updateCategory(editingCategory._id, categoryData);
       } else {
@@ -131,15 +160,19 @@ const BudgetScreen = () => {
   const handleConfirmDelete = async () => {
     if (categoryToDelete && categoryToDelete._id) {
       try {
-        // First delete all associated transactions
-        await deleteTransactionsByCategory(categoryToDelete._id);
-        // Then delete the category itself
+        // Use the updated deleteCategory function which already handles associated transactions
         await deleteCategory(categoryToDelete._id);
-        // Refresh both categories and transactions
+        
+        // Refresh the data
         await fetchCategories();
         await fetchTransactions();
       } catch (error) {
         console.error('Error during deletion:', error);
+        Alert.alert(
+          "Deletion Failed",
+          "Failed to delete the category. Please try again later.",
+          [{ text: "OK" }]
+        );
       } finally {
         // Close dialog and clear category to delete
         setIsDeleteDialogVisible(false);
@@ -191,6 +224,16 @@ const BudgetScreen = () => {
               width: `${totalBudget > 0 ? Math.min((totalSpent / totalBudget) * 100, 100) : 0}%` 
             }]} />
           </View>
+          
+          {/* Budget inconsistency warning */}
+          {hasBudgetInconsistency && (
+            <View style={styles.warningContainer}>
+              <AlertTriangle color="#FFFFFF" size={16} />
+              <Text style={styles.warningText}>
+                Warning: Your category budgets (${sumOfCategoryBudgets.toLocaleString()}) exceed your total budget
+              </Text>
+            </View>
+          )}
         </View>
 
         {/* Categories Section */}
@@ -252,6 +295,8 @@ const BudgetScreen = () => {
         onDismiss={() => setIsDialogVisible(false)}
         category={editingCategory}
         onSubmit={handleCategorySubmit}
+        availableBudget={calculateAvailableBudget(editingCategory?._id)}
+        totalBudget={totalBudget}
       />
 
       <EditTotalBudgetDialog
@@ -334,6 +379,21 @@ const styles = StyleSheet.create({
   progressBarFill: {
     height: '100%',
     backgroundColor: '#bfdbfe',
+  },
+  // New warning styles
+  warningContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(239, 68, 68, 0.7)',
+    borderRadius: 8,
+    padding: 8,
+    marginTop: 12,
+    gap: 8,
+  },
+  warningText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    flex: 1,
   },
   categoriesHeader: {
     flexDirection: 'row',

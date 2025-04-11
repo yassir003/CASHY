@@ -44,10 +44,11 @@ const RootStack = createStackNavigator<RootStackParamList>()
 
 // Auth navigator setup
 const AuthNavigator = () => {
-  const { login } = useAuth();
-  
+  // Keep the onAuthSuccess prop since AuthScreen expects it
   const handleAuthSuccess = () => {
-    // Auth success is now handled by the AuthContext
+    // Auth success is handled by the AuthContext
+    // This function can be empty since we're using the AuthContext
+    // but we need to provide it to satisfy the type requirements
   };
 
   return (
@@ -155,9 +156,17 @@ const MainTabNavigator = () => {
 const AppNavigator = () => {
   const { user, token } = useAuth();
   const isAuthenticated = !!user && !!token;
+  
+  // This key will force the NavigationContainer to re-mount when auth state changes
+  const [navigationKey, setNavigationKey] = useState(isAuthenticated ? 'auth' : 'no-auth');
+  
+  useEffect(() => {
+    // Update navigation key when auth state changes
+    setNavigationKey(isAuthenticated ? 'auth' : 'no-auth');
+  }, [isAuthenticated]);
 
   return (
-    <NavigationContainer>
+    <NavigationContainer key={navigationKey}>
       <RootStack.Navigator screenOptions={{ headerShown: false }}>
         {isAuthenticated ? (
           // Show main tabs with bottom tab navigation when authenticated

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Modal, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Modal, StyleSheet, ScrollView, Alert } from 'react-native';
 import { AntDesign } from '@expo/vector-icons';
 import { Home, Utensils, Car, Film, Music, ShoppingBag, Briefcase, Plane, Heart, Smartphone } from 'lucide-react-native';
 
@@ -14,19 +14,23 @@ interface Category {
   userId?: string;
 }
 
-// Updated props interface
+// Updated props interface with available budget and total budget
 interface AddEditCategoryDialogProps {
   visible: boolean;
   onDismiss: () => void;
   category?: Partial<Category> | null;
   onSubmit: (categoryData: Omit<Category, '_id' | 'userId'>) => void;
+  availableBudget: number;
+  totalBudget: number;
 }
 
 const AddEditCategoryDialog: React.FC<AddEditCategoryDialogProps> = ({ 
   visible, 
   onDismiss, 
   category, 
-  onSubmit 
+  onSubmit,
+  availableBudget,
+  totalBudget
 }) => {
   // Initialize state with default or provided values
   const [name, setName] = useState('');
@@ -34,6 +38,14 @@ const AddEditCategoryDialog: React.FC<AddEditCategoryDialogProps> = ({
   // const [spent, setSpent] = useState('0');
   const [color, setColor] = useState('#3b82f6');
   const [icon, setIcon] = useState('Home');
+  const [budgetError, setBudgetError] = useState<string | null>(null);
+  const [nameError, setNameError] = useState<boolean>(false);
+  const [zeroBudgetError, setZeroBudgetError] = useState<boolean>(false);
+
+  // Calculate max budget allowed for this category
+  const maxAllowedBudget = category?._id 
+    ? (category.budget || 0) + availableBudget 
+    : availableBudget;
 
   // Update state when category prop changes
   useEffect(() => {
@@ -51,21 +63,84 @@ const AddEditCategoryDialog: React.FC<AddEditCategoryDialogProps> = ({
       setColor('#3b82f6');
       setIcon('Home');
     }
+    setBudgetError(null);
+    setNameError(false);
+    setZeroBudgetError(false);
   }, [category, visible]);
+
+  // Validate budget whenever it changes
+  useEffect(() => {
+    validateBudget(Number(budget));
+    // Reset zero budget error when budget changes
+    if (Number(budget) !== 0) {
+      setZeroBudgetError(false);
+    }
+  }, [budget, availableBudget]);
+
+  // Reset name error when name changes
+  useEffect(() => {
+    if (name.trim()) {
+      setNameError(false);
+    }
+  }, [name]);
 
   const colorOptions = ['#3b82f6', '#10b981', '#8b5cf6', '#f97316', '#ef4444', '#14b8a6'];
 
+  // Budget validation function
+  const validateBudget = (value: number) => {
+    if (isNaN(value) || value < 0) {
+      setBudgetError("Budget must be a positive number");
+      return false;
+    }
+    
+    if (value > maxAllowedBudget) {
+      setBudgetError(`Budget exceeds available amount of $${maxAllowedBudget.toLocaleString()}`);
+      return false;
+    }
+    
+    setBudgetError(null);
+    return true;
+  };
+
   const handleSubmit = () => {
+    // Reset errors
+    let hasErrors = false;
+    setNameError(false);
+    setZeroBudgetError(false);
+    
     // Validate inputs
     if (!name.trim()) {
-      // Optional: Add error handling or show an alert
+      setNameError(true);
+      hasErrors = true;
+    }
+
+    const budgetValue = Number(budget) || 0;
+    
+    // Check budget is valid
+    if (!validateBudget(budgetValue)) {
+      hasErrors = true;
+    }
+    
+    // Check if budget is zero
+    if (budgetValue === 0) {
+      setZeroBudgetError(true);
+      hasErrors = true;
+    }
+
+    if (hasErrors) {
+      // Show error alert with appropriate message
+      let errorMessage = "Please correct the following:";
+      if (!name.trim()) errorMessage += "\n- Category name is required";
+      if (budgetError) errorMessage += `\n- ${budgetError}`;
+      if (budgetValue === 0) errorMessage += "\n- Budget amount cannot be zero";
+      
+      Alert.alert("Error", errorMessage);
       return;
     }
 
     onSubmit({
       name: name.trim(),
-      budget: Number(budget) || 0,
-      // spent: Number(spent) || 0,
+      budget: budgetValue,
       color,
       icon,
     });
@@ -89,8 +164,11 @@ const AddEditCategoryDialog: React.FC<AddEditCategoryDialogProps> = ({
                 placeholder="e.g. Groceries"
                 value={name}
                 onChangeText={setName}
-                style={styles.input}
+                style={[styles.input, nameError ? styles.inputError : null]}
               />
+              {nameError && (
+                <Text style={styles.errorText}>Category name is required</Text>
+              )}
             </View>
 
             <View style={styles.inputGroup}>
@@ -100,20 +178,26 @@ const AddEditCategoryDialog: React.FC<AddEditCategoryDialogProps> = ({
                 value={budget}
                 onChangeText={setBudget}
                 keyboardType="numeric"
-                style={styles.input}
+                style={[
+                  styles.input, 
+                  (budgetError || zeroBudgetError) ? styles.inputError : null
+                ]}
               />
+              {budgetError && (
+                <Text style={styles.errorText}>{budgetError}</Text>
+              )}
+              {zeroBudgetError && !budgetError && (
+                <Text style={styles.errorText}>Budget amount cannot be zero</Text>
+              )}
+              <Text style={styles.helperText}>
+                Available budget: ${availableBudget.toLocaleString()} / Total: ${totalBudget.toLocaleString()}
+              </Text>
+              {category?._id && (
+                <Text style={styles.helperText}>
+                  Current category budget: ${(category.budget || 0).toLocaleString()}
+                </Text>
+              )}
             </View>
-
-            {/* <View style={styles.inputGroup}>
-              <Text style={styles.label}>Spent Amount ($)</Text>
-              <TextInput
-                placeholder="0.00"
-                value={spent}
-                onChangeText={setSpent}
-                keyboardType="numeric"
-                style={styles.input}
-              />
-            </View> */}
 
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Color</Text>
@@ -217,6 +301,19 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#1e293b',
   },
+  inputError: {
+    borderColor: '#ef4444',
+  },
+  errorText: {
+    color: '#ef4444',
+    fontSize: 12,
+    marginTop: 4,
+  },
+  helperText: {
+    color: '#64748b',
+    fontSize: 12,
+    marginTop: 4,
+  },
   colorOptions: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -256,6 +353,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
+  },
+  disabledButton: {
+    backgroundColor: '#94a3b8',
   },
   saveButtonText: {
     color: '#ffffff',
