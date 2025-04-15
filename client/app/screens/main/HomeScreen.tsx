@@ -194,7 +194,7 @@ export default function HomeScreen() {
         <View style={styles.statCard}>
           <Text style={styles.statLabel}>Total Budget</Text>
           <Text style={styles.statValue}>
-            {budget !== null 
+            {budget?.amount !== undefined 
               ? `$${formatCurrency(budget.amount)}`
               : '$0.00'}
           </Text>

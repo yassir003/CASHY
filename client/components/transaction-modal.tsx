@@ -188,9 +188,14 @@ export function TransactionModal({
   };
 
   const handleChange = (name: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    if (name === 'amount') {
+      // Optional: Validate numeric input
+      const cleanedValue = value.replace(/[^0-9.]/g, '');
+      setFormData((prev) => ({ ...prev, [name]: cleanedValue }));
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
     
-    // Mark field as touched
     setTouched(prev => ({
       ...prev,
       [name]: true

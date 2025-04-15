@@ -59,17 +59,25 @@ export const BudgetProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     try {
       const userId = getUserId();
       if (!userId) throw new Error('User not found');
-
-      let response;
+  
       if (budget?._id) {
         // Update existing budget
-        response = await api.put(`/budgets/${budget._id}`, { amount });
+        await api.put(`/budgets/${budget._id}`, { amount });
+        // Create updated budget object locally
+        const updatedBudget = { ...budget, amount };
+        setBudgetState(updatedBudget);
       } else {
         // Create new budget
-        response = await api.post('/budgets', { amount });
+        const response = await api.post('/budgets', { userId, amount });
+        // Create new budget object from response and provided amount
+        const newBudget = { 
+          _id: response.data._id, 
+          userId,
+          amount 
+        };
+        setBudgetState(newBudget);
       }
-
-      setBudgetState(response.data);
+  
       setShouldOpenBudgetModal(false);
     } catch (error) {
       console.error('Error saving budget:', error);

@@ -44,13 +44,14 @@ const fetchTransactions = async () => {
   try {
     const response = await api.get('/expenses/this-month');
     
-    // Transform the data to include category details
-    const transactions = response.data.map(({ _id, categoryId, ...rest }: any) => ({
+    // Convert amount to string
+    const transactions = response.data.map(({ _id, categoryId, amount, ...rest }: any) => ({
       id: _id,
-      category: categoryId?._id || categoryId, // Use categoryId._id if populated, or categoryId if not
+      category: categoryId?._id || categoryId,
       categoryName: categoryId?.name || undefined,
       categoryColor: categoryId?.color || undefined,
       categoryIcon: categoryId?.icon || undefined,
+      amount: amount.toString(), // Convert to string
       ...rest
     }));
     
@@ -68,13 +69,13 @@ const fetchfiveTransactions = async () => {
   try {
     const response = await api.get('/expenses/last-five-this-month');
     
-    // Transform the data to include category details
-    const transactions = response.data.map(({ _id, categoryId, ...rest }: any) => ({
+    const transactions = response.data.map(({ _id, categoryId, amount, ...rest }: any) => ({
       id: _id,
-      category: categoryId?._id || categoryId, // Use categoryId._id if populated, or categoryId if not
+      category: categoryId?._id || categoryId,
       categoryName: categoryId?.name || undefined,
       categoryColor: categoryId?.color || undefined,
       categoryIcon: categoryId?.icon || undefined,
+      amount: amount.toString(), // Convert to string
       ...rest
     }));
     
@@ -91,12 +92,15 @@ const addTransaction = async (transaction: Omit<Transaction, 'id'>) => {
   setLoading(true);
   setError(null);
   try {
-    // Extract and send categoryId instead of category
-    const { category, categoryName, categoryColor, categoryIcon, ...rest } = transaction;
-    const payload = { ...rest, categoryId: category };
+    const { category, ...rest } = transaction;
+    const payload = { 
+      ...rest, 
+      categoryId: category,
+      amount: parseFloat(rest.amount) // Convert string to number
+    };
     
     await api.post('/expenses', payload);
-    await fetchTransactions(); // Refresh the list
+    await fetchTransactions();
   } catch (err) {
     setError(err instanceof Error ? err.message : 'Failed to add transaction');
     throw err;
@@ -106,19 +110,19 @@ const addTransaction = async (transaction: Omit<Transaction, 'id'>) => {
 };
 
   // 2. Update updateTransaction to handle categoryId and ensure valid ID
-const updateTransaction = async (id: string, transaction: Partial<Transaction>) => {
+  const updateTransaction = async (id: string, transaction: Partial<Transaction>) => {
     setLoading(true);
     setError(null);
     try {
-      // Validate ID exists
-      if (!id) throw new Error('Invalid transaction ID');
-      
-      // Convert category to categoryId in payload
       const { category, ...rest } = transaction;
-      const payload = { ...rest, categoryId: category };
+      const payload = { 
+        ...rest, 
+        categoryId: category,
+        amount: rest.amount ? parseFloat(rest.amount) : undefined // Convert string to number
+      };
   
       await api.put(`/expenses/${id}`, payload);
-      await fetchTransactions(); // Refresh data
+      await fetchTransactions();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Update failed');
       throw err;

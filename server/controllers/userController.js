@@ -14,7 +14,7 @@ export const register = async (req, res) => {
         const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: "1h" });
         
         // Custom user data with only username
-        const userData = { username: user.username };
+        const userData = { username: user.username , id: user._id, email: user.email};
 
         res.status(201).json({
             token,
